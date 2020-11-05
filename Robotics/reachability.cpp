@@ -61,14 +61,14 @@ int main(int argc, char** argv)
         cout << "Usage: " << argv[0] << " <scene> <robot> <object>" << endl;
         return 0;
     }
-    
+
     // load workcell
     rw::models::WorkCell::Ptr wc = rw::loaders::WorkCellLoader::Factory::load(argv[1]);
     if(wc == NULL){
         RW_THROW("COULD NOT LOAD scene... check path!");
         return -1;
     }
-    
+
     // finding serial device
     rw::models::SerialDevice::Ptr robot = wc->findDevice<rw::models::SerialDevice>(argv[2]);
     if(robot==NULL)
@@ -76,7 +76,7 @@ int main(int argc, char** argv)
         RW_THROW("COULD not find device robot... check model");
         return -1;
     }
-    
+
     // find relevant frames
     rw::kinematics::MovableFrame::Ptr objectFrame = wc->findFrame<rw::kinematics::MovableFrame>(argv[3]);
     if(objectFrame==NULL)
@@ -84,30 +84,51 @@ int main(int argc, char** argv)
         RW_THROW("COULD not find movable object frame... check model");
         return -1;
     }
-    
+
+    //Getting Table frames
+    rw::kinematics::FixedFrame::Ptr tableFrame = wc->findFrame<rw::kinematics::FixedFrame>("Table");
+    if(tableFrame==NULL)
+    {
+        RW_THROW("COULD not find Table frame... check model");
+        return -1;
+    }
+
+
     // setup collision detector
     rw::proximity::CollisionDetector::Ptr detector = rw::common::ownedPtr(new rw::proximity::CollisionDetector(wc, rwlibs::proximitystrategies::ProximityStrategyFactory::makeDefaultCollisionStrategy()));
-    
-    
+
+
     State state = wc->getDefaultState();
     vector<rw::math::Q> collisionFreeSolutions;
-    
-    for(double rollAngle = 0; rollAngle < 360.0; rollAngle += 1.0)
+
+    rw::math::Rotation3D<> objectRotInv = inverse(objectFrame->getTransform(state).R());
+
+
+    for(double rollAngle = 0; rollAngle < 360.0; rollAngle += 5.0)
     {
-        for(double pitchAngle = 0; pitchAngle < 360.0; pitchAngle += 1.0) // TODO check if 180 is enough
+	      cout << "RollAngle: " << rollAngle << endl;
+
+
+        //Ved 180 går den under objektet.
+        for(double pitchAngle = 0; pitchAngle < 180.0; pitchAngle += 5.0) // TODO check if 180 is enough
         {
-            // new object frame
-            rw::math::Transform3D<> T = rw::math::Transform3D<>(
-                                    rw::math::Vector3D<>(objectFrame->getTransform(state).P()),
-                                                                rw::math::RPY<>(rollAngle*rw::math::Deg2Rad,pitchAngle*rw::math::Deg2Rad,0));
-            
-            objectFrame->moveTo(T,state);
-            string graspTarget = argv[3] + ".GraspTarget";
-            vector<rw::math::Q> solutions = getConfigurations(graspTarget,"GraspTCP",robot,wc,state);
-            
+
+
+
+            objectFrame->moveTo(
+              rw::math::Transform3D<>(
+                rw::math::Vector3D<>(tableFrame->getTransform(state).P() + objectFrame->getTransform(state).P()),
+                (rw::math::RPY<>(0,180*rw::math::Deg2Rad,90*rw::math::Deg2Rad).toRotation3D()) *
+                 (rw::math::RPY<>(pitchAngle*rw::math::Deg2Rad,rollAngle*rw::math::Deg2Rad,0).toRotation3D())
+                )
+              , state);
+
+            string graspTarget = string(argv[3]) + "GraspTarget";
+            vector<rw::math::Q> solutions = getConfigurations(graspTarget, "GraspTCP",robot, wc, state);
+
             for(unsigned int i=0; i<solutions.size(); i++){
                 // set the robot in that configuration and check if it is in collision
-                robotUR5->setQ(solutions[i], state);
+                robot->setQ(solutions[i], state);
                 if( !detector->inCollision(state,NULL,true) ){
                     collisionFreeSolutions.push_back(solutions[i]); // save it
                     break; // we only need one
@@ -115,16 +136,16 @@ int main(int argc, char** argv)
             }
         }
     }
-    
+
     cout << "Current position of the robot vs object to be grasped has: "
     << collisionFreeSolutions.size()
     << " collision-free inverse kinematics solutions!" << std::endl;
-    
+
     // visualize them
     TimedStatePath tStatePath;
     double time=0;
     for(unsigned int i=0; i<collisionFreeSolutions.size(); i++){
-        robotUR5->setQ(collisionFreeSolutions[i], state);
+        robot->setQ(collisionFreeSolutions[i], state);
         tStatePath.push_back(TimedState(time,state));
         time+=0.01;
     }
@@ -132,5 +153,5 @@ int main(int argc, char** argv)
     rw::loaders::PathLoader::storeTimedStatePath(*wc, tStatePath, "../Project_WorkCell/visu.rwplay");
 
     return 0;
-    
+
 }

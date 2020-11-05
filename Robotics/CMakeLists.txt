@@ -54,7 +54,7 @@ FIND_PACKAGE(OpenMP)
 
 
 # LIBRARIES ---------------------------------------------------------------------------------------------------------------------------------------------
-add_executable(Reachability reachabilityAnalysis.cpp)
+add_executable(Reachability reachability.cpp)
 target_link_libraries(Reachability ${ROBWORK_LIBRARIES})
 
 
