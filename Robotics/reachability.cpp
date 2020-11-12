@@ -109,19 +109,33 @@ int main(int argc, char** argv)
 	      cout << "RollAngle: " << rollAngle << endl;
 
 
+
         //Ved 180 går den under objektet.
         for(double pitchAngle = 0; pitchAngle < 180.0; pitchAngle += 5.0) // TODO check if 180 is enough
         {
 
 
 
+
             objectFrame->moveTo(
               rw::math::Transform3D<>(
                 rw::math::Vector3D<>(tableFrame->getTransform(state).P() + objectFrame->getTransform(state).P()),
-                (rw::math::RPY<>(0,180*rw::math::Deg2Rad,90*rw::math::Deg2Rad).toRotation3D()) *
-                 (rw::math::RPY<>(pitchAngle*rw::math::Deg2Rad,rollAngle*rw::math::Deg2Rad,0).toRotation3D())
+                (rw::math::RPY<>(0,(180+5.0)*rw::math::Deg2Rad,-90*rw::math::Deg2Rad).toRotation3D()) *
+                 (rw::math::RPY<>(rollAngle*rw::math::Deg2Rad,pitchAngle*rw::math::Deg2Rad,0).toRotation3D())
                 )
               , state);
+
+            /*
+            cout << "Transform3D: " << endl << rw::math::Transform3D<>(
+              rw::math::Vector3D<>(tableFrame->getTransform(state).P() + objectFrame->getTransform(state).P()),
+              (rw::math::RPY<>(0,180*rw::math::Deg2Rad,90*rw::math::Deg2Rad).toRotation3D()) *
+               (rw::math::RPY<>(pitchAngle*rw::math::Deg2Rad,rollAngle*rw::math::Deg2Rad,0).toRotation3D())
+             ).R() << endl;
+
+            cout << "Rot:" << endl << (rw::math::RPY<>(0,180*rw::math::Deg2Rad,90*rw::math::Deg2Rad).toRotation3D()) << endl;
+            cout << "Rot_reach:" << endl << rw::math::RPY<>(pitchAngle*rw::math::Deg2Rad,rollAngle*rw::math::Deg2Rad,0).toRotation3D() << endl;
+            */
+
 
             string graspTarget = string(argv[3]) + "GraspTarget";
             vector<rw::math::Q> solutions = getConfigurations(graspTarget, "GraspTCP",robot, wc, state);
