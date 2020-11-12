@@ -25,6 +25,10 @@ rw/core/Ptr.hpp
 -
 rw/core/PropertyMap.hpp
 -
+opencv2/opencv.hpp
+-
+opencv2/imgcodecs.hpp
+-
 
 /usr/include/eigen3/Eigen/Cholesky
 Core

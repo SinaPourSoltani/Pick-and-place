@@ -46,6 +46,8 @@ include_directories(${ROBWORKSTUDIO_INCLUDE_DIRS})
 link_directories(${ROBWORKSTUDIO_LIBRARY_DIRS})
 add_definitions(${ROBWORKSTUDIO_DEFINITIONS})
 
+# Opencv
+find_package(OpenCV REQUIRED)
 
 
 # Set the output dir for generated libraries and binaries
@@ -69,6 +71,6 @@ FIND_PACKAGE(OpenMP)
 
 # LIBRARIES ---------------------------------------------------------------------------------------------------------------------------------------------
 add_executable(sparseStereo sparseStereo.cpp)
-target_link_libraries(sparseStereo ${ROBWORKSTUDIO_LIBRARIES} ${ROBWORK_LIBRARIES})
+target_link_libraries(sparseStereo ${ROBWORKSTUDIO_LIBRARIES} ${ROBWORK_LIBRARIES} ${OpenCV_LIBS})
 
 

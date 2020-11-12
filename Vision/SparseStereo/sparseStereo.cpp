@@ -18,7 +18,12 @@
 #include <rw/core/Ptr.hpp>
 #include <rw/core/PropertyMap.hpp>
 
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgcodecs.hpp>
+
 using namespace std;
+
+using namespace cv;
 
 using namespace rw::core;
 using namespace rw::common;
@@ -45,6 +50,21 @@ class SparseStereo{
 
     double leftFovy, rightFovy;
     int leftWidth, leftHeight, rightWidth, rightHeight;
+
+
+    //Inspired from: https://answers.opencv.org/question/36309/opencv-gaussian-noise/
+    void addNoiseToImage(string image_, string output, int mean = 0, double variance = 0.1){
+      cout << "\nAdding noise to " << image_ << endl;
+      Mat leftImg = imread(image_, IMREAD_GRAYSCALE);
+      Mat leftNoise = Mat(leftImg.size(), CV_64F);
+      Mat leftResult;
+      normalize(leftImg, leftResult, 0.0, 1.0, CV_MINMAX, CV_64F);
+      randn(leftNoise, mean, variance); //mean and variance
+      leftResult = leftResult + leftNoise;
+      normalize(leftResult, leftResult, 0.0, 1.0, CV_MINMAX, CV_64F);
+      leftResult.convertTo(leftResult, CV_32F, 255, 0);
+      imwrite(output, leftResult);
+    }
 
   public:
     SparseStereo(char** argv){
@@ -138,6 +158,13 @@ class SparseStereo{
       app.close();
     }
 
+
+
+    void addNoiseToImages(int mean = 0, double variance = 0.1){
+      addNoiseToImage("Images/left_image.ppm", "Images/left_image_noise.png", mean, variance);
+      addNoiseToImage("Images/right_image.ppm", "Images/right_image_noise.png", mean, variance);
+    }
+
     //virtual ~SparseStereo();
 };
 
@@ -152,7 +179,8 @@ int main(int argc, char** argv) {
   }
 
   SparseStereo sparseStereo(argv);
-  sparseStereo.takeImages();
+  //sparseStereo.takeImages();
+  sparseStereo.addNoiseToImages(0,0.2);
 
 
 
