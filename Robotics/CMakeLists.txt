@@ -1,60 +1,27 @@
-#
-# Test CMake version
-#
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0)
+cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 
-# The name of the project.
-PROJECT(graspAnalysis)
+project(graspAnalysis)
 
-add_compile_options(-std=c++11)
+set(ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+set(RW_ROOT $ENV{RW_ROOT})
+set(RobWork_DIR ${RW_ROOT}/cmake) 
+set(CMAKE_MODULE_PATH ${RW_ROOT}/build ${CMAKE_MODULE_PATH})
 
-# Used to resolve absolute path names
-SET(ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+set(RWS_ROOT $ENV{RWS_ROOT})
+set(RobWorkStudio_DIR ${RWS_ROOT}/cmake) 
+set(CMAKE_MODULE_PATH ${RWS_ROOT}/build ${CMAKE_MODULE_PATH})
 
-set(CMAKE_VERBOSE_MAKEFILE false) 
+# RobWork
+find_package(RobWork REQUIRED)
+include_directories(${ROBWORK_INCLUDE_DIRS})
+link_directories(${ROBWORK_LIBRARY_DIRS})
+add_definitions(${ROBWORK_DEFINITIONS})
 
-# Now set the RW root
-SET(RW_ROOT /home/student/Workspace/RobWork/RobWork)
+# RobWorkStudio
+find_package(RobWorkStudio REQUIRED)
+include_directories(${ROBWORKSTUDIO_INCLUDE_DIRS})
+link_directories(${ROBWORKSTUDIO_LIBRARY_DIRS})
+add_definitions(${ROBWORKSTUDIO_DEFINITIONS})
 
-# We use the settings that robwork studio uses
-IF( NOT DEFINED CMAKE_BUILD_TYPE )
-    SET(CMAKE_BUILD_TYPE Release)
-ENDIF()
-
-#Use RobWork and RobWorkSim
-SET(RobWork_DIR ${RW_ROOT}/cmake)
-FIND_PACKAGE(RobWork REQUIRED) 
-
-
-INCLUDE_DIRECTORIES( ${ROBWORK_INCLUDE_DIRS})
-LINK_DIRECTORIES( ${ROBWORK_LIBRARY_DIRS} )
-
-
-#Include RobWorkSim settings
-
-SET(CMAKE_MODULE_PATH ${RW_ROOT}/build ${CMAKE_MODULE_PATH})
-
-# Set the output dir for generated libraries and binaries
-IF(MSVC)
-	SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${ROOT}/bin" CACHE PATH "Runtime directory" FORCE)
-	SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${ROOT}/libs" CACHE PATH "Library directory" FORCE)
-	SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${ROOT}/libs" CACHE PATH "Archive directory" FORCE)
-ELSE()
-	SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${ROOT}/bin/${CMAKE_BUILD_TYPE}" CACHE PATH "Runtime directory" FORCE)
-	SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${ROOT}/libs/${CMAKE_BUILD_TYPE}" CACHE PATH "Library directory" FORCE)
-	SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${ROOT}/libs/${CMAKE_BUILD_TYPE}" CACHE PATH "Archive directory" FORCE)
-ENDIF()
-
-# openmp is used to parallize some for-loops in some code 
-FIND_PACKAGE(OpenMP)
-  IF(OPENMP_FOUND)
-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  ENDIF()
-
-
-# LIBRARIES ---------------------------------------------------------------------------------------------------------------------------------------------
-add_executable(Reachability reachability.cpp)
-target_link_libraries(Reachability ${ROBWORK_LIBRARIES})
-
-
+add_executable(${PROJECT_NAME} reachability.cpp)
+target_link_libraries(${PROJECT_NAME} ${ROBWORK_LIBRARIES} ${ROBWORKSTUDIO_LIBRARIES})
