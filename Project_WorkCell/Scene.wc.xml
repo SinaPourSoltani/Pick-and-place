@@ -20,42 +20,62 @@
 
 
 	<Frame name="GraspTCP" refframe="WSG50.TCP" type="Fixed">
-		<RPY>0 0 0</RPY> <Pos>0 0 0.15</Pos>
+		<RPY>0 0 0</RPY> <Pos>0 0 0.0</Pos>
 	</Frame>
 
-	<Frame name="Bottle" refframe="Table"  type="Movable" daf="true" >
-     <RPY> -90 0 90 </RPY> <Pos> 0 0.474 0.21 </Pos>
-     <Drawable name="Bottle" refframe="Bottle">
-         <Polytope file="parts/bottle" />
-     </Drawable>
-	</Frame>
-
-    <Frame name="BottleGraspTarget" refframe="Bottle" type="Fixed">
+    <!-- Obstacle -->
+    <Frame name="Obstacle" refframe="Table" type="Fixed">
+        <RPY>0 0 0</RPY> <Pos>0.0 0.274 0.201</Pos>
+        <Drawable name="ObstacleGeo" refframe="Obstacle" colmodel="Enabled">
+            <Pos>0 0 0</Pos>
+            <RPY>0 0 0</RPY>
+            <RGB>0.1 0.1 0.1</RGB>
+            <Box x="0.90" y="0.01" z="0.20"/>
+        </Drawable>
+    </Frame>
+    
+    <!-- Our objects -->
+    <Frame name="CylinderRed" refframe="Table" type="Movable" daf="true">
+        <RPY>0 0 0</RPY> <Pos>0.25 0.474 0.191</Pos>
+        <Drawable name="CylinderRedGeo" refframe="CylinderRed" colmodel="Enabled">
+            <Pos>0 0 0</Pos>
+            <RPY>0 0 0</RPY>
+            <RGB>1.0 0 0</RGB>
+            <Cylinder radius="0.04" z="0.16"/>
+        </Drawable>
+    </Frame>
+    <Frame name="GraspTargetCylinderRed" refframe="CylinderRed" type="Movable">
         <RPY>0 0 0</RPY> <Pos>0 0 0</Pos>
     </Frame>
 
-	<Frame name="Square" refframe="Table"  type="Movable" daf="true" >
-     <RPY> -90 0 90 </RPY> <Pos> 0.25 0.474 0.150</Pos>
-     <Drawable name="Square" refframe="Square">
-         <Polytope file="parts/square" />
-     </Drawable>
+
+    <Frame name="CylinderGreen" refframe="Table" type="Movable" daf="true">
+        <RPY>0 0 0</RPY> <Pos>0.00 0.474 0.150</Pos>
+        <Drawable name="CylinderGreenGeo" refframe="CylinderGreen" colmodel="Enabled">
+            <Pos>0 0 0</Pos>
+            <RPY>0 0 0</RPY>
+            <RGB>0 1.0 0</RGB>
+            <Cylinder radius="0.035" z="0.08"/>
+        </Drawable>
+    </Frame>
+    <Frame name="GraspTargetCylinderGreen" refframe="CylinderGreen" type="Movable">
+        <RPY>0 0 0</RPY> <Pos>0 0 0</Pos>
     </Frame>
 
-    <Frame name="SquareGraspTarget" refframe="Square" type="Fixed">
-        <RPY>-90 0 90</RPY> <Pos>0 0 0</Pos>
+
+    <Frame name="CylinderBlue" refframe="Table" type="Movable" daf="true">
+        <RPY>0 0 0</RPY> <Pos>-0.25 0.474 0.170</Pos>
+        <Drawable name="CylinderBlueGeo" refframe="CylinderBlue" colmodel="Enabled">
+            <Pos>0 0 0</Pos>
+            <RPY>0 0 0</RPY>
+            <RGB>0 0 1.0</RGB>
+            <Cylinder radius="0.03" z="0.12"/>
+        </Drawable>
+    </Frame>
+    <Frame name="GraspTargetCylinderBlue" refframe="CylinderBlue" type="Movable">
+        <RPY>0 0 0</RPY> <Pos>0 0 0</Pos>
     </Frame>
 
-	<Frame name="Cylinder" refframe="Table"  type="Movable" daf="true" >
-     <RPY> -90 0 90 </RPY> <Pos> -0.25 0.474 0.150 </Pos>
-     <Drawable name="Cylinder" refframe="Cylinder">
-         <Polytope file="parts/cylinder" />
-     </Drawable>
-    </Frame>
-
-<!-- Tror ikke det skal være -90 0 90. Det er jo relativt til den den har som refframe -->
-    <Frame name="CylinderGraspTarget" refframe="Cylinder" type="Fixed">
-        <RPY>-90 0 90</RPY> <Pos>0 0 0</Pos>
-    </Frame>
 
 <!-- Cameras -->
 
