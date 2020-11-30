@@ -69,13 +69,20 @@ public:
         LinearInterpolator<Transform3D<> >::Ptr pl2pld = ownedPtr(new LinearInterpolator<Transform3D<> >(place, placeDepart, 1));
         LinearInterpolator<Transform3D<> >::Ptr pld2hm = ownedPtr(new LinearInterpolator<Transform3D<> >(placeDepart, home, 1));
         
+        cout << hm2pla->getEnd() << endl << pla2pl->getStart() << endl;
+        cout << ((hm2pla->getEnd() != pla2pl->getStart())? "different" : "same") << endl;
+        
+        cout << __LINE__ << endl;
         ParabolicBlend<Transform3D<> >::Ptr blend_hm2pk = ownedPtr(new ParabolicBlend<Transform3D<> >(hm2pka, pka2pk, 0.25));
+        cout << __LINE__ << endl;
         ParabolicBlend<Transform3D<> >::Ptr blend_pk2hm = ownedPtr(new ParabolicBlend<Transform3D<> >(pk2pkd, pkd2hm, 0.25));
-        
-        //ParabolicBlend<Transform3D<> >::Ptr blend_pkd2pla = ownedPtr(new ParabolicBlend<Transform3D<> >(pkd2hm, hm2pla, 0.25));
-        
+        cout << __LINE__ << endl;
+        ParabolicBlend<Transform3D<> >::Ptr blend_pkd2pla = ownedPtr(new ParabolicBlend<Transform3D<> >(pkd2hm, hm2pla, 0.25));
+        cout << __LINE__ << endl;
         ParabolicBlend<Transform3D<> >::Ptr blend_hm2pl = ownedPtr(new ParabolicBlend<Transform3D<> >(hm2pla, pla2pl, 0.25));
+        cout << __LINE__ << endl;
         ParabolicBlend<Transform3D<> >::Ptr blend_pl2hm = ownedPtr(new ParabolicBlend<Transform3D<> >(pl2pld, pld2hm, 0.25));
+        cout << __LINE__ << endl;
         
         InterpolatorTrajectory<Transform3D<> > trajectory;
         
@@ -171,8 +178,8 @@ int main(int argc, char**argv){
     // home                 : defined in the serial device
     State state = wc->getDefaultState();
     
-    Transform3D<> pick(Vector3D<>(0.25, 0.474, 0.191), RPY<>(0,0,0));
-    Transform3D<> place(Vector3D<>(PLACE_CENTER_X, PLACE_CENTER_Y, 0.191), RPY<>(0,0,0));
+    Transform3D<> pick(Vector3D<>(0.25, 0.474, 0.291), RPY<>(0,0,0));
+    Transform3D<> place(Vector3D<>(PLACE_CENTER_X, PLACE_CENTER_Y, 0.091), RPY<>(0,0,0));
     
     MotionPlanning mp(robot, pick, place, state);
     InterpolatorTrajectory<Transform3D<> > trajectory = mp.linearlyInterpolate();
