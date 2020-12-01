@@ -129,6 +129,57 @@ class SparseStereo{
       imwrite(path, imflip_mat);
     }
 
+    /*Finds the centers of the cylinders. Does this by finding contours
+    * in the image. Sorting the contours by area and taking the three smallest
+    * which is the cylinders. Then it sorts the three center points, from the
+    * contour of the cylinders, by their x coordinate.
+    */
+    array<Mat,NUM_OBJECTS> findCenter(string imagePath, bool showImage = false){
+      array<Mat,3> points;
+      Mat src = imread(imagePath, CV_LOAD_IMAGE_COLOR);
+      Mat img = src.clone();
+      cvtColor(src, img, COLOR_RGBA2GRAY, 0);
+      threshold(img, img, 177, 255, THRESH_BINARY_INV);
+      vector<vector<Point>> contours;
+      findContours(img, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+
+      vector<pair<Point,double>> coordsArea;
+      for(int i = 0; i < contours.size(); i++){
+        Moments m = moments(contours[i], false);
+        double area = contourArea(contours[i]);
+        if(area <= 0){ //If area is zero we don't consider the contour.
+          continue;
+        }
+        pair<Point,double> p;
+        p.first = Point(m.m10 / m.m00, m.m01 / m.m00);
+        p.second = area;
+        coordsArea.push_back(p);
+      }
+      //Sorting so the three first is the cylinders.
+      sort(coordsArea.begin(), coordsArea.end(), compareVec);
+      vector<Point> pointsVec;
+      for(int i = 0; i < NUM_OBJECTS; i++){
+        pointsVec.push_back(coordsArea[i].first);
+      }
+      sort(pointsVec.begin(), pointsVec.end(), comparePoints);
+      for(int i = 0; i < NUM_OBJECTS; i++){
+        Mat point(3,1, CV_64F);
+        point.at<double>(0,0) = pointsVec[i].x;
+        point.at<double>(1,0) = pointsVec[i].y;
+        point.at<double>(2,0) = 1.0;
+        points[i] = point;
+      }
+
+      if(showImage){
+        circle(src, pointsVec[0], 2, Scalar(0, 255, 255), -1);
+        circle(src, pointsVec[1], 2, Scalar(0, 255, 255), -1);
+        circle(src, pointsVec[2], 2, Scalar(0, 255, 255), -1);
+        imshow(imagePath, src);
+        waitKey(0);
+      }
+      return points;
+    }
+
   public:
     SparseStereo(char** argv){
       wc = WorkCellLoader::Factory::load(argv[1]);
@@ -250,7 +301,7 @@ class SparseStereo{
       return points;
     }
 
-    void stereopsis(){
+    vector<Mat> stereopsis(){
       leftProjectionMatrix = calculateProjectionMatrix(leftCamera, leftFovy, leftWidth, leftHeight);
       rightProjectionMatrix = calculateProjectionMatrix(rightCamera, rightFovy, rightWidth, rightHeight);
 
@@ -270,32 +321,59 @@ class SparseStereo{
       auto fundMatLeftToRight = computeFundamentalMatrix(rightEpipole, rightProjectionMat, leftProjectionMat);
 
       //This will be replaced with feature detection
-      auto points = openImages();
+      //auto points = openImages();
+      auto correspondingPoints = findCenters();
+      vector<Mat> points3D;
+      for(int i = 0; i < NUM_OBJECTS; i++){
+        array<Mat,2> points;
+        points[0] = correspondingPoints[i].first;
+        points[1] = correspondingPoints[i].second;
+        cout << "Point no: " << i+1 << endl;
 
-      auto leftMInf = projectToInf(leftPp[0], points[0]);
-      auto rightMInf = projectToInf(rightPp[0], points[1]);
 
-      auto leftPluckerLine = computePluckerLine(leftOC(Range(0,3), Range(0,1)), leftMInf);
-      auto rightPluckerLine = computePluckerLine(rightOC(Range(0,3), Range(0,1)), rightMInf);
+        auto leftMInf = projectToInf(leftPp[0], points[0]);
+        auto rightMInf = projectToInf(rightPp[0], points[1]);
 
-      auto intersection = computePluckerIntersection(leftPluckerLine, rightPluckerLine);
-      cout << "Intersection: " << endl << intersection << endl;
+        auto leftPluckerLine = computePluckerLine(leftOC(Range(0,3), Range(0,1)), leftMInf);
+        auto rightPluckerLine = computePluckerLine(rightOC(Range(0,3), Range(0,1)), rightMInf);
 
-      // Compare with OpenCV triangulation
-      //The below code has been inspired from exercise from lecture 2 in Computer Vision.
-      cout << "The OpenCV implmentation: " << endl;
-      cv::Mat pnts3D(1, 1, CV_64FC4);
-      cv::Mat cam0pnts(1, 1, CV_64FC2);
-      cv::Mat cam1pnts(1, 1, CV_64FC2);
-      cam0pnts.at<cv::Vec2d>(0)[0] = points[0].at<double>(0, 0);
-      cam0pnts.at<cv::Vec2d>(0)[1] = points[0].at<double>(1, 0);
-      cam1pnts.at<cv::Vec2d>(0)[0] = points[1].at<double>(0, 0);
-      cam1pnts.at<cv::Vec2d>(0)[1] = points[1].at<double>(1, 0);
-      triangulatePoints(leftProjectionMat, rightProjectionMat, cam0pnts, cam1pnts, pnts3D);
-      std::cout << "OpenCV triangulation" << std::endl;
-      std::cout << "Image points: " << cam0pnts << "\t" << cam1pnts << std::endl << std::endl;
-      std::cout << "Triangulated point (normalized): " << std::endl << pnts3D / pnts3D.at<double>(3, 0) << std::endl << std::endl;
+        auto intersection = computePluckerIntersection(leftPluckerLine, rightPluckerLine);
+        cout << "Intersection: " << endl << intersection << endl;
+        points3D.push_back(intersection);
 
+        // Compare with OpenCV triangulation
+        //The below code has been inspired from exercise from lecture 2 in Computer Vision.
+        /*
+        cout << "The OpenCV implmentation: " << endl;
+        cv::Mat pnts3D(1, 1, CV_64FC4);
+        cv::Mat cam0pnts(1, 1, CV_64FC2);
+        cv::Mat cam1pnts(1, 1, CV_64FC2);
+        cam0pnts.at<cv::Vec2d>(0)[0] = points[0].at<double>(0, 0);
+        cam0pnts.at<cv::Vec2d>(0)[1] = points[0].at<double>(1, 0);
+        cam1pnts.at<cv::Vec2d>(0)[0] = points[1].at<double>(0, 0);
+        cam1pnts.at<cv::Vec2d>(0)[1] = points[1].at<double>(1, 0);
+        triangulatePoints(leftProjectionMat, rightProjectionMat, cam0pnts, cam1pnts, pnts3D);
+        std::cout << "OpenCV triangulation" << std::endl;
+        std::cout << "Image points: " << cam0pnts << "\t" << cam1pnts << std::endl << std::endl;
+        std::cout << "Triangulated point (normalized): " << std::endl << pnts3D / pnts3D.at<double>(3, 0) << std::endl << std::endl;
+        */
+      }
+      return points3D;
+    }
+
+    //Finds the centers of the cylinders.
+
+    array<pair<Mat, Mat>,3> findCenters(){
+      auto leftPoints = findCenter("/home/student/Desktop/left_image.ppm");
+      auto rightPoints = findCenter("/home/student/Desktop/right_image.ppm");
+      array<pair<Mat, Mat>,3> correspondingPoints;
+      for(int i = 0; i < NUM_OBJECTS; i++){
+        pair<Mat, Mat> p;
+        p.first = leftPoints[i];
+        p.second = rightPoints[i];
+        correspondingPoints[i] = p;
+      }
+      return correspondingPoints;
     }
 
     //virtual ~SparseStereo();
@@ -312,9 +390,9 @@ int main(int argc, char** argv) {
   }
 
   SparseStereo sparseStereo(argv);
-  sparseStereo.takeImages();
-  sparseStereo.addNoiseToImages(0,0.1);
-  sparseStereo.stereopsis();
+  //sparseStereo.takeImages();
+  //sparseStereo.addNoiseToImages(0,0.1);
+  vector<Mat> points3D = sparseStereo.stereopsis();
 
 
 

@@ -1,3 +1,4 @@
+
 //
 //  sparseStereo.cpp
 //  Robotics and Computer Vision
@@ -16,10 +17,17 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/calib3d.hpp>
 
-
+#define NUM_OBJECTS 3
 
 double tmp_x=-1;
 double tmp_y=-1;
+bool compareVec(std::pair<cv::Point,double> &a, std::pair<cv::Point,double> &b){
+  return a.second < b.second;
+}
+
+bool comparePoints(cv::Point &a, cv::Point &b){
+  return a.x < b.x;
+}
 
 //Callback event for detecting mouse-click on images
 void CallBackFunc(int event, int x, int y, int flags, void* userdata) {
