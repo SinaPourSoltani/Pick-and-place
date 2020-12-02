@@ -138,7 +138,7 @@ CMAKE_LINKER:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/Xcod
 //Path to a program.
 CMAKE_MAKE_PROGRAM:FILEPATH=/usr/bin/make
 
-CMAKE_MODULE_LINKER_FLAGS:STRING='   '
+CMAKE_MODULE_LINKER_FLAGS:STRING='      '
 
 //Flags used by the linker during the creation of modules during
 // DEBUG builds.
@@ -191,7 +191,7 @@ CMAKE_RANLIB:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/Xcod
 //Path to a program.
 CMAKE_READELF:FILEPATH=CMAKE_READELF-NOTFOUND
 
-CMAKE_SHARED_LINKER_FLAGS:STRING='   '
+CMAKE_SHARED_LINKER_FLAGS:STRING='      '
 
 //Flags used by the linker during the creation of shared libraries
 // during DEBUG builds.

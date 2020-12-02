@@ -25,13 +25,14 @@
 
 #include <iostream>
 #include <thread>
+#include <random>
 
 #define Z_MIN -2
 
 using namespace std;
 
 using namespace pcl;
-using namespace pcl::common;
+//using namespace pcl::common;
 using namespace pcl::io;
 using namespace pcl::visualization;
 
@@ -99,6 +100,21 @@ PointCloud<PointNormal>::Ptr calculateSurfaceNormals(PointCloud<PointXYZ>::Ptr c
     return cloud_with_normals;
 }
 
+void addNoise(PointCloud<PointXYZ>::Ptr cloud, double std){
+    random_device rd;
+    mt19937 gen(rd());
+    normal_distribution<double> distribution(0,std);
+    
+    for(int i = 0; i < cloud->size(); i++){
+        double noisex = distribution(gen);
+        double noisey = distribution(gen);
+        double noisez = distribution(gen);
+        
+        cloud->points[i].x += noisex;
+        cloud->points[i].y += noisey;
+        cloud->points[i].z += noisez;
+    }
+}
 
 
 
@@ -150,7 +166,8 @@ int main(int argc, char**argv) {
         
         PointCloud<PointXYZ>::Ptr pclScene = grapPointCloud(wc, rwstudio, cameraFrame, fovy, width, height);
         cloud = pclScene;
-        PointCloud<PointNormal>::Ptr pclNormals = calculateSurfaceNormals(pclScene);
+        addNoise(cloud, 0.01);
+        PointCloud<PointNormal>::Ptr pclNormals = calculateSurfaceNormals(cloud);
         pclToVisualize = pclNormals;
         app.close();
     });
