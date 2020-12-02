@@ -339,6 +339,7 @@ CMakeFiles/MotionPlanning.dir/motionplanning.cpp.o
  /Users/sinapoursoltani/RobWork/RobWork/src/rw/trajectory/TrajectoryFactory.hpp
  /Users/sinapoursoltani/RobWork/RobWork/src/rw/trajectory/TrajectoryIterator.hpp
  /Users/sinapoursoltani/RobWork/RobWork/src/rw/trajectory/TrajectorySequence.hpp
+ /Users/sinapoursoltani/RobWork/RobWork/src/rwlibs/pathplanners/rrt/RRTPlanner.hpp
  /Users/sinapoursoltani/RobWork/RobWork/src/rwlibs/proximitystrategies/ProximityStrategyFactory.hpp
  /usr/local/include/boost/algorithm/string.hpp
  /usr/local/include/boost/algorithm/string/case_conv.hpp
