@@ -22,10 +22,12 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/registration/transformation_estimation_svd.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include <iostream>
 #include <thread>
 #include <random>
+#include <limits>
 
 #define Z_MIN -2
 
@@ -75,16 +77,16 @@ PointCloud<PointXYZ>::Ptr grapPointCloud(WorkCell::Ptr wc, RobWorkStudio* rwstud
 PointCloud<PointNormal>::Ptr calculateSurfaceNormals(PointCloud<PointXYZ>::Ptr cloud){
     // Inspiration from: https://pcl.readthedocs.io/projects/tutorials/en/latest/normal_estimation.html
     // Create the normal estimation class, and pass the input dataset to it
-    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+    NormalEstimation<PointXYZ, Normal> ne;
     ne.setInputCloud (cloud);
     
     // Create an empty kdtree representation, and pass it to the normal estimation object.
     // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+    search::KdTree<PointXYZ>::Ptr tree (new search::KdTree<pcl::PointXYZ> ());
     ne.setSearchMethod (tree);
     
     // Output datasets
-    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+    pcl::PointCloud<Normal>::Ptr cloud_normals (new PointCloud<pcl::Normal>);
     
     // Use all neighbors in a sphere of radius 3cm
     ne.setRadiusSearch (0.03);
@@ -100,6 +102,29 @@ PointCloud<PointNormal>::Ptr calculateSurfaceNormals(PointCloud<PointXYZ>::Ptr c
     return cloud_with_normals;
 }
 
+PointCloud<PointXYZ>::Ptr voxelGrid(PointCloud<PointXYZ>::Ptr cloud){
+    cerr << "PointCloud before filtering: " << cloud->width * cloud->height
+       << " data points (" << pcl::getFieldsList (*cloud) << ")." << std::endl;
+
+    cout << __LINE__ << endl;
+    PointCloud<PointXYZ>::Ptr cloud_filtered;
+    cout << __LINE__ << endl;
+    // Create the filtering object
+    VoxelGrid<PointXYZ> sor;
+    cout << __LINE__ << endl;
+    sor.setInputCloud (cloud);
+    cout << __LINE__ << endl;
+    sor.setLeafSize (0.01f, 0.01f, 0.01f);
+    cout << __LINE__ << endl;
+    sor.filter (*cloud_filtered);
+    
+    std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height
+       << " data points (" << pcl::getFieldsList (*cloud_filtered) << ")." << std::endl;
+    
+    return cloud_filtered;
+    
+}
+
 void addNoise(PointCloud<PointXYZ>::Ptr cloud, double std){
     random_device rd;
     mt19937 gen(rd());
@@ -113,6 +138,114 @@ void addNoise(PointCloud<PointXYZ>::Ptr cloud, double std){
         cloud->points[i].x += noisex;
         cloud->points[i].y += noisey;
         cloud->points[i].z += noisez;
+    }
+}
+
+PointXYZ add(PointXYZ a, PointXYZ b){
+    return PointXYZ(a.x + b.x, a.y + b.y, a.z + b.z);
+}
+
+PointXYZ sub(PointXYZ a, PointXYZ b){
+    return PointXYZ(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+
+PointXYZ divide(PointXYZ a, int d){
+    return PointXYZ(a.x / d, a.y / d, a.z / d);
+}
+
+PointXYZ cross(PointXYZ a, PointXYZ b){
+    return PointXYZ(a.y*b.z - a.z*b.y, a.x*b.z - a.z*b.x, a.x*b.y - a.y*b.x);
+}
+
+float dot(PointXYZ a, PointXYZ b){
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+PointNormal points2plane(vector<PointXYZ> threepoints){
+    PointXYZ a = threepoints[0];
+    PointXYZ b = threepoints[1];
+    PointXYZ c = threepoints[2];
+    
+    PointXYZ u = sub(b, a);
+    PointXYZ v = sub(c, a);
+    
+    PointXYZ n = cross(u, v);
+    
+    return PointNormal(a.x, a.y, a.z, n.x, n.y, n.z);
+}
+
+float dist2plane(PointNormal* plane, PointXYZ* point){
+    cout << *plane << *point << endl;
+    PointXYZ normal(plane->normal[0], plane->normal[1], plane->normal[2]);
+    PointXYZ unitPoint(point->x - plane->x, point->y - plane->y, point->z - plane->z);
+    return dot(normal, unitPoint);
+}
+
+PointCloud<PointXYZ>::Ptr find_inliers(PointNormal plane, PointCloud<PointXYZ>::Ptr cloud, float threshold){
+    PointCloud<PointXYZ>::Ptr inliers;
+    for(auto point : cloud->points){
+        cout << point << endl;
+        float dist = dist2plane(&plane, &point);
+        if (abs(dist) <= threshold){
+            inliers->push_back(point);
+        }
+    }
+    return inliers;
+}
+
+float sq(float x){
+    return x*x;
+}
+
+float calc_std(PointCloud<PointXYZ>::Ptr cloud){
+    PointXYZ centroid(0,0,0);
+    int num_points = cloud->size();
+    for(int i = 0; i < num_points; i++){
+        centroid = add(centroid, cloud->points[i]);
+    }
+    
+    cout << "centroid: " << centroid << " /= " << num_points;
+    
+    centroid = divide(centroid, num_points);
+    
+    cout << centroid << endl;
+    
+    float sum = 0;
+    for(int i = 0; i < num_points; i++){
+        PointXYZ point = cloud->points[i];
+        sum += sq(point.x - centroid.x) + sq(point.y - centroid.y) + sq(point.z - centroid.z);
+    }
+    sum /= num_points;
+    
+    return sqrt(sum);
+}
+
+void detectPlane(PointCloud<PointXYZ>::Ptr cloud, int forseeable_support, float threshold, float alpha = 0.95) {
+    float bestSupport = 0;
+    PointNormal bestPlane(0,0,0);
+    float bestStd = numeric_limits<float>::infinity();
+    float eps = 1 - (float)forseeable_support / cloud->size();
+    int N = round(log(1 - alpha) / log(1 - pow((1 - eps),3)));
+    
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> distr(0, cloud->size() - 1);
+    
+    PointCloud<PointXYZ>::Ptr inliers;
+    
+    for(int i = 0; i < 1; i++){
+        vector<PointXYZ> randomPoints = {};
+        for(int j = 0; j < 3; j++) { randomPoints.push_back(cloud->points[distr(gen)]);}
+        PointNormal plane = points2plane(randomPoints);
+        inliers = find_inliers(plane, cloud, threshold);
+        float sd = calc_std(inliers);
+        int num_inliers = inliers->size();
+        if(num_inliers > bestSupport || num_inliers == bestSupport && sd < bestStd){
+            cout << "Found plane with #" << num_inliers << endl;
+            bestSupport = num_inliers,
+            bestStd = sd;
+            bestPlane = plane;
+        }
     }
 }
 
@@ -151,7 +284,7 @@ int main(int argc, char**argv) {
     
     // Initialized globally to allow for main to visualize when thread overwrites with simulated point cloud
     PointCloud<PointXYZ>::Ptr cloud(new PointCloud<PointXYZ>);
-    PointCloud<PointNormal>::Ptr pclToVisualize(new PointCloud<PointNormal>);
+    PointCloud<PointNormal>::Ptr pclNormals(new PointCloud<PointNormal>);
     
     RobWorkStudioApp app("");
     thread t([&]() {
@@ -165,10 +298,12 @@ int main(int argc, char**argv) {
         TimerUtil::sleepMs(2000);
         
         PointCloud<PointXYZ>::Ptr pclScene = grapPointCloud(wc, rwstudio, cameraFrame, fovy, width, height);
-        cloud = pclScene;
+        
+        cloud = pclScene; // voxelGrid(pclScene);
         addNoise(cloud, 0.01);
-        PointCloud<PointNormal>::Ptr pclNormals = calculateSurfaceNormals(cloud);
-        pclToVisualize = pclNormals;
+        //detectPlane(cloud, 20000, 0.001);
+        
+        pclNormals = calculateSurfaceNormals(cloud);
         app.close();
     });
     t.detach();
@@ -178,7 +313,7 @@ int main(int argc, char**argv) {
     
     PCLVisualizer v("PointCloud");
     v.addPointCloud<PointXYZ>(cloud, "points");
-    v.addPointCloudNormals<PointNormal>(pclToVisualize,100,0.06,"normals");
+    v.addPointCloudNormals<PointNormal>(pclNormals,1,0.06,"normals");
     v.spin();
 
     return 0;
