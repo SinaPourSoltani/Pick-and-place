@@ -105,14 +105,14 @@ public:
         // Make "helper" transformations
         Transform3D<> frameBaseTGoal = Kinematics::frameTframe(frameRobotBase, frameTarget, state);
         Transform3D<> frameTcpTRobotTcp = Kinematics::frameTframe(frameTcp, frameRobotTcp, state);
-        cout << "frameBaseTGoal: " << endl << frameBaseTGoal << endl;
-        cout << "frameTcpTRobotTcp: " << endl << frameTcpTRobotTcp << endl;
+        //cout << "frameBaseTGoal: " << endl << frameBaseTGoal << endl;
+        //cout << "frameTcpTRobotTcp: " << endl << frameTcpTRobotTcp << endl;
 
         // get grasp frame in robot tool frame
-        Transform3D<> targetAt = frameBaseTGoal * frameTcpTRobotTcp;
+        Transform3D<> targetAt = frameBaseTGoal * Transform3D<>(Vector3D<>(0,0,-0.07191),RPY<>(0,0,0));//* frameTcpTRobotTcp;
 
-        cout << "TargetAt: " << endl << targetAt << endl;
-        cout << "Target: " << endl << target << endl << endl;
+        //cout << "TargetAt: " << endl << targetAt << endl;
+        //cout << "Target: " << endl << target << endl << endl;
 
 
         rw::invkin::ClosedFormIKSolverUR::Ptr closedFormSovler = rw::common::ownedPtr( new rw::invkin::ClosedFormIKSolverUR(robot, state) );
@@ -148,20 +148,12 @@ public:
         LinearInterpolator<Transform3D<> >::Ptr pl2pld = ownedPtr(new LinearInterpolator<Transform3D<> >(place, placeDepart, 1));
         LinearInterpolator<Transform3D<> >::Ptr pld2hm = ownedPtr(new LinearInterpolator<Transform3D<> >(placeDepart, home, 1));
 
-        cout << hm2pla->getEnd() << endl << pla2pl->getStart() << endl;
-        cout << ((hm2pla->getEnd() != pla2pl->getStart())? "different" : "same") << endl;
 
-        cout << __LINE__ << endl;
         ParabolicBlend<Transform3D<> >::Ptr blend_hm2pk = ownedPtr(new ParabolicBlend<Transform3D<> >(hm2pka, pka2pk, 0.25));
-        cout << __LINE__ << endl;
         ParabolicBlend<Transform3D<> >::Ptr blend_pk2hm = ownedPtr(new ParabolicBlend<Transform3D<> >(pk2pkd, pkd2hm, 0.25));
-        cout << __LINE__ << endl;
         ParabolicBlend<Transform3D<> >::Ptr blend_pkd2pla = ownedPtr(new ParabolicBlend<Transform3D<> >(pkd2hm, hm2pla, 0.25));
-        cout << __LINE__ << endl;
         ParabolicBlend<Transform3D<> >::Ptr blend_hm2pl = ownedPtr(new ParabolicBlend<Transform3D<> >(hm2pla, pla2pl, 0.25));
-        cout << __LINE__ << endl;
         ParabolicBlend<Transform3D<> >::Ptr blend_pl2hm = ownedPtr(new ParabolicBlend<Transform3D<> >(pl2pld, pld2hm, 0.25));
-        cout << __LINE__ << endl;
 
         InterpolatorTrajectory<Transform3D<> > trajectory;
 
@@ -194,27 +186,21 @@ public:
     vector<QPath> RRTInterpolate(double extend) {
         vector<Transform3D<> > interpolationTransformsPoints = getPointTrajectorySequence();
         vector<Q> jointPoints;
-        cout << __LINE__ << endl;
         for(auto tf : interpolationTransformsPoints){
             vector<Q> jointConfigs = getJointConfigurations(tf);
-            cout << jointConfigs.size() << endl;
-            //cout << tf << endl;
-            cout << jointConfigs[0] << endl;
+            cout << "Joint configurations size: " << jointConfigs.size() << endl;
             jointPoints.push_back(jointConfigs[0]); // TODO change to more optimal configuration rather than simply picking the first
         }
-        cout << __LINE__ << endl;
         return RRTConnect(jointPoints, extend);
     }
     vector<QPath> RRTConnect(vector<Q> interpolationJointsPoints, double extend){
         vector<QPath> totalPath;
-        cout << __LINE__ << endl;
         for (int i = 0; i < interpolationJointsPoints.size() - 1; i++) {
             Q from(interpolationJointsPoints[i]);
             Q to(interpolationJointsPoints[i + 1]);
 
             totalPath.push_back(RRTConnectQtoQ(from, to, extend));
         }
-        cout << __LINE__ << endl;
         return totalPath;
     }
     QPath RRTConnectQtoQ(Q from, Q to, double extend){
@@ -285,7 +271,7 @@ protected:
                                     home.R());
     }
     vector<Transform3D<> > getPointTrajectorySequence(){
-        return {home, pickApproach, pick, pickDepart, home, placeApproach, place, placeDepart, home};
+        return {home, pick, home, place, home};
     }
 
     WorkCell::Ptr wc;
