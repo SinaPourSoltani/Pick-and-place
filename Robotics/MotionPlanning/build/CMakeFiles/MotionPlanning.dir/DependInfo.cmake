@@ -4,13 +4,14 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Robotics/MotionPlanning/motionplanning.cpp" "/Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Robotics/MotionPlanning/build/CMakeFiles/MotionPlanning.dir/motionplanning.cpp.o"
+  "/home/student/Desktop/Pick-and-place/Robotics/MotionPlanning/motionplanning.cpp" "/home/student/Desktop/Pick-and-place/Robotics/MotionPlanning/build/CMakeFiles/MotionPlanning.dir/motionplanning.cpp.o"
   )
-set(CMAKE_CXX_COMPILER_ID "Clang")
+set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # Preprocessor definitions for this target.
 set(CMAKE_TARGET_DEFINITIONS_CXX
   "QT_CORE_LIB"
+  "QT_DEBUG"
   "QT_GUI_LIB"
   "QT_NO_DEBUG"
   "QT_OPENGL_LIB"
@@ -19,29 +20,22 @@ set(CMAKE_TARGET_DEFINITIONS_CXX
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
-  "/usr/local/include/eigen3"
-  "/Users/sinapoursoltani/RobWork/RobWork/cmake/../src"
-  "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/OpenGL.framework"
-  "/usr/local/include"
-  "/Users/sinapoursoltani/RobWork/RobWork/cmake/../ext/rwyaobi"
-  "/Users/sinapoursoltani/RobWork/RobWork/cmake/../ext/rwpqp"
-  "/usr/local/include/lua"
-  "/Users/sinapoursoltani/RobWork/RobWork/cmake/../ext/qhull/src"
-  "/Users/sinapoursoltani/RobWork/RobWork/cmake/../ext/csgjs/src"
-  "/usr/local/Cellar/fcl/0.6.1/include"
-  "/usr/local/Frameworks/Python.framework/Versions/3.9/include/python3.9"
-  "/Users/sinapoursoltani/RobWork/RobWorkStudio/cmake/../src"
-  "/Users/sinapoursoltani/RobWork/RobWorkStudio/cmake/../ext/qtpropertybrowser/src"
-  "/usr/local/opt/qt5/lib/QtCore.framework"
-  "/usr/local/opt/qt5/lib/QtCore.framework/Headers"
-  "/usr/local/opt/qt5/./mkspecs/macx-clang"
-  "/usr/local/opt/qt5/lib/QtGui.framework"
-  "/usr/local/opt/qt5/lib/QtGui.framework/Headers"
-  "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/OpenGL.framework/Headers"
-  "/usr/local/opt/qt5/lib/QtWidgets.framework"
-  "/usr/local/opt/qt5/lib/QtWidgets.framework/Headers"
-  "/usr/local/opt/qt5/lib/QtOpenGL.framework"
-  "/usr/local/opt/qt5/lib/QtOpenGL.framework/Headers"
+  "/usr/include/eigen3"
+  "/usr/share/robwork-1.2/cmake/../../../include/robwork-1.2"
+  "/usr/share/robwork-1.2/cmake/../../../include/robwork-1.2/ext/rwyaobi"
+  "/usr/share/robwork-1.2/cmake/../../../include/robwork-1.2/ext/rwpqp"
+  "/usr/include/lua5.3"
+  "/usr/share/robwork-1.2/cmake/../../../include/robwork-1.2/ext/qhull/src"
+  "/usr/share/robwork-1.2/cmake/../../../include/robwork-1.2/ext/csgjs/src"
+  "/usr/include/python3.6m"
+  "/usr/share/robworkstudio-1.2/cmake/../../../include/robworkstudio-1.2"
+  "/usr/share/robworkstudio-1.2/cmake/../../../share/robworkstudio-1.2/ext/qtpropertybrowser/src"
+  "/usr/include/x86_64-linux-gnu/qt5"
+  "/usr/include/x86_64-linux-gnu/qt5/QtCore"
+  "/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++"
+  "/usr/include/x86_64-linux-gnu/qt5/QtGui"
+  "/usr/include/x86_64-linux-gnu/qt5/QtWidgets"
+  "/usr/include/x86_64-linux-gnu/qt5/QtOpenGL"
   )
 
 # Targets to which this target links.
