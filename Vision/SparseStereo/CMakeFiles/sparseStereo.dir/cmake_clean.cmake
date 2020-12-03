@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
   "CMakeFiles/sparseStereo.dir/sparseStereo.cpp.o"
-  "bin/sparseStereo.pdb"
-  "bin/sparseStereo"
+  "sparseStereo.pdb"
+  "sparseStereo"
 )
 
 # Per-language clean rules from dependency scanning.
