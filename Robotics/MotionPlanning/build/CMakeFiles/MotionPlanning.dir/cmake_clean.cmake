@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
   "CMakeFiles/MotionPlanning.dir/motionplanning.cpp.o"
-  "MotionPlanning.pdb"
   "MotionPlanning"
+  "MotionPlanning.pdb"
 )
 
 # Per-language clean rules from dependency scanning.
