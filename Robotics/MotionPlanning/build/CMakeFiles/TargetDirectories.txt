@@ -1,3 +1,3 @@
-/Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Robotics/MotionPlanning/build/CMakeFiles/rebuild_cache.dir
-/Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Robotics/MotionPlanning/build/CMakeFiles/edit_cache.dir
-/Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Robotics/MotionPlanning/build/CMakeFiles/MotionPlanning.dir
+/home/student/Desktop/Pick-and-place/Robotics/MotionPlanning/build/CMakeFiles/rebuild_cache.dir
+/home/student/Desktop/Pick-and-place/Robotics/MotionPlanning/build/CMakeFiles/MotionPlanning.dir
+/home/student/Desktop/Pick-and-place/Robotics/MotionPlanning/build/CMakeFiles/edit_cache.dir

@@ -81,7 +81,7 @@ public:
     // collision free solution closes to current configuration
 
     vector<Q> getJointConfigurations(Transform3D<> target, bool onlyCollisionFree = true) {
-        
+
         // Get, make and print name of frames
         const string robotName = robot->getName();
         const string nameRobotBase = robotName + "." + "Base";
@@ -101,11 +101,11 @@ public:
             cout << " Found \"" << nameRobotBase << "\": " << (frameRobotBase==NULL ? "NO!" : "YES!") << endl;
             cout << " Found \"" << nameRobotTcp << "\": " << (frameRobotTcp==NULL ? "NO!" : "YES!") << endl;
         }
-        
+
         isPickingOrPlacing(target);
         if (target == home) {
             cout << "True home" << endl;
-            Q home(-0, -0.983092, -2.15122, -1.57965, 1.5708, -0);
+            Q home(6,-0, -0.983092, -2.15122, -1.57965, 1.5708, -0);
             return {home};
         }
 
@@ -212,7 +212,6 @@ public:
         for (int i = 0; i < interpolationJointsPoints.size() - 1; i++) {
             Q from(interpolationJointsPoints[i]);
             Q to(interpolationJointsPoints[i + 1]);
-
             totalPath.push_back(RRTConnectQtoQ(from, to, extend));
         }
         return totalPath;
@@ -220,29 +219,32 @@ public:
     QPath RRTConnectQtoQ(Q from, Q to, double extend){
         // Inspired from RoVi sample plugin
         // and https://www.robwork.dk/manual/motionplanning/
-
-        CollisionStrategy::Ptr cdstrategy = ProximityStrategyFactory::makeDefaultCollisionStrategy();
-        CollisionDetector::Ptr collisionDetector = ownedPtr (new CollisionDetector (wc, cdstrategy));
-        PlannerConstraint constraint = PlannerConstraint::make (collisionDetector, robot, state);
+        Math::seed();
+        CollisionDetector detector(wc, ProximityStrategyFactory::makeDefaultCollisionStrategy());
+        PlannerConstraint constraint = PlannerConstraint::make(&detector,robot,state);
 
         QSampler::Ptr sampler = QSampler::makeConstrained(QSampler::makeUniform(robot), constraint.getQConstraintPtr());
         QMetric::Ptr metric = MetricFactory::makeEuclidean<Q>();
+        cout << "Extend: " << extend << endl;
 
-        QToQPlanner::Ptr planner = RRTPlanner::makeQToQPlanner (constraint, sampler, metric, extend, RRTPlanner::RRTConnect);
+        const QToQPlanner::Ptr planner = RRTPlanner::makeQToQPlanner (constraint, sampler, metric, extend, RRTPlanner::RRTConnect);
 
         ProximityData pdata;
-        robot->setQ (from, state);
-        if (collisionDetector->inCollision (state, pdata))
+        robot->setQ(from,state);
+        if (detector.inCollision (state, pdata))
             RW_THROW ("Initial configuration in collision! can not plan a path.");
         robot->setQ (to, state);
-        if (collisionDetector->inCollision (state, pdata))
+        if (detector.inCollision (state, pdata))
             RW_THROW ("Final configuration in collision! can not plan a path.");
 
         QPath result;
         if (planner->query (from, to, result)) {
             std::cout << "Planned path with " << result.size ();
             std::cout << " configurations" << std::endl;
+        }else{
+          RW_THROW("Could not find RRT path between the two points");
         }
+
 
         return result;
     }
@@ -269,6 +271,7 @@ public:
         rw::loaders::PathLoader::storeTimedStatePath(*wc, tStatePath, filePath);
     }
     void writeQPathToFile(QPath path, string filePath){
+        cout << endl << endl << "------------------------------------" << "writeQPathToFile called!" << "------------------------------------" << endl << endl;
         state = wc->getDefaultState();
         TimedStatePath tStatePath;
         double time = 0;
@@ -300,37 +303,41 @@ protected:
     vector<Transform3D<> > getPointTrajectorySequence(){
         return {home, pick, home, place, home};
     }
-    
+
     bool compareTransforms(Transform3D<> t1, Transform3D<> t2){
-        cout << setprecision(10);
+        double threshold = 0.01 * 1000;
         for(int i = 0; i < 3; i++){
             int p1 =(int)(t1.P()(i) * 1000);
             int p2 =(int)(t2.P()(i) * 1000);
-            cout << endl << "t1: " << p1 << " - t2: " << p2;
-            if( p1 != p2 ) {
-                cout << " !=";
+            //cout << endl << "t1: " << p1 << " - t2: " << p2;
+            if( p1 != p2) {
+              if(i == 2 && p1 <= p2 + threshold && p1 >= p2 - threshold){
+                return true;
+              }
+                //cout << " !=";
                 return false;
             } else {
-                cout << " ==";
+                //cout << " ==";
             }
 
         }
         cout << "EQUAL TRANSFORMS" << endl;
         return true;
     }
-    
+
     void isPickingOrPlacing(Transform3D<> H = Transform3D<>::identity()){
         float threshold = 0.5;
-        
+
         Transform3D<> tcpH = H;
         Frame * tcpFrame = wc->findFrame("GraspTCP");
         Frame * objectFrame = wc->findFrame("CylinderRed");
         if (H == Transform3D<>::identity()){
-            Transform3D<> tcpH = tcpFrame->wTf(state);
+            //cout << "Identity matrix" << endl;
+            tcpH = tcpFrame->wTf(state);
         }
-        cout << endl << "is it?: " << endl;
-        
-        cout << "TCP: " << tcpH << endl << "PickT: " << pick << endl;
+        //cout << endl << "is it?: " << endl;
+
+        //cout << "TCP: " << tcpH << endl << "PickT: " << pick << endl;
         if(compareTransforms(tcpH, pick)) {
             cout << "picked" << endl;
             Kinematics::gripFrame(objectFrame, tcpFrame, state);
@@ -339,7 +346,7 @@ protected:
             Kinematics::gripFrame(objectFrame, wc->getWorldFrame(), state);
         }
     }
-    
+
     WorkCell::Ptr wc;
     SerialDevice::Ptr robot;
     State state;
@@ -381,7 +388,7 @@ int main(int argc, char**argv){
     // deliver target       : one of the two inputs
     // back to apprach      : goal pos with home z
     // home                 : defined in the serial device
-    
+
     Math::seed();
 
     State state = wc->getDefaultState();
@@ -390,14 +397,14 @@ int main(int argc, char**argv){
     Transform3D<> place(Vector3D<>(PLACE_CENTER_X, PLACE_CENTER_Y, 0.191), RPY<>(0,Deg2Rad * 180,0));
 
     MotionPlanner mp(wc, robot, pick, place, state);
-    InterpolatorTrajectory<Transform3D<> > trajectory = mp.linearlyInterpolate();
-    QPath lipath = mp.trajectoryToQPath(trajectory);
-    mp.writeTrajectoryToFile(trajectory, trajectoryFilePath);
-    mp.writeQPathToFile(lipath, qpathFilePath);
-    
+    //InterpolatorTrajectory<Transform3D<> > trajectory = mp.linearlyInterpolate();
+    //QPath lipath = mp.trajectoryToQPath(trajectory);
+    //mp.writeTrajectoryToFile(trajectory, trajectoryFilePath);
+    //mp.writeQPathToFile(lipath, qpathFilePath);
+
     // TODO Attach object
     // choose closest joint values
-    
-    //vector<QPath> rrtpath = mp.RRTInterpolate(0.01);
-    //mp.writeQPathVectorToFile(rrtpath, "qconfig.rwplay");
+
+    vector<QPath> rrtpath = mp.RRTInterpolate(0.05);
+    mp.writeQPathVectorToFile(rrtpath, "qconfig.rwplay");
 }
