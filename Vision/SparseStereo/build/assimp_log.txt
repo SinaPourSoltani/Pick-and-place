@@ -1,8 +1,8 @@
 Info,  T0: this is my info call
-Info,  T0: Load /home/student/Desktop/Pick-and-place/Vision/SparseStereo/../../Project_WorkCell/table/Sigmund_table.obj
+Info,  T0: Load /home/student/Desktop/Pick-and-place/Vision/SparseStereo/build/../../../Project_WorkCell/table/Sigmund_table.obj
 Debug, T0: Assimp 4.1.0 amd64 gcc debug shared singlethreaded
 Info,  T0: Found a matching importer for this file format: Wavefront Object Importer.
-Info,  T0: Import root directory is '/home/student/Desktop/Pick-and-place/Vision/SparseStereo/../../Project_WorkCell/table/'
+Info,  T0: Import root directory is '/home/student/Desktop/Pick-and-place/Vision/SparseStereo/build/../../../Project_WorkCell/table/'
 Info,  T0: Entering post processing pipeline
 Debug, T0: Generate spatially-sorted vertex cache
 Debug, T0: JoinVerticesProcess begin

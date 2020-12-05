@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/student/Desktop/Pick-and-place/Vision/SparseStereo/sparseStereo.cpp" "/home/student/Desktop/Pick-and-place/Vision/SparseStereo/CMakeFiles/sparseStereo.dir/sparseStereo.cpp.o"
+  "/home/student/Desktop/Pick-and-place/Vision/SparseStereo/sparseStereo.cpp" "/home/student/Desktop/Pick-and-place/Vision/SparseStereo/build/CMakeFiles/sparseStereo.dir/sparseStereo.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

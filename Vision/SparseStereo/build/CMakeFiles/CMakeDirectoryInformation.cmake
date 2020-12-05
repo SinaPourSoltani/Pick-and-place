@@ -3,7 +3,7 @@
 
 # Relative path conversion top directories.
 set(CMAKE_RELATIVE_PATH_TOP_SOURCE "/home/student/Desktop/Pick-and-place/Vision/SparseStereo")
-set(CMAKE_RELATIVE_PATH_TOP_BINARY "/home/student/Desktop/Pick-and-place/Vision/SparseStereo")
+set(CMAKE_RELATIVE_PATH_TOP_BINARY "/home/student/Desktop/Pick-and-place/Vision/SparseStereo/build")
 
 # Force unix paths in dependencies.
 set(CMAKE_FORCE_UNIX_PATHS 1)

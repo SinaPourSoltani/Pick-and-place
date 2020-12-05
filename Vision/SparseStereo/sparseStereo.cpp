@@ -52,6 +52,7 @@ using namespace rws;
 
 #define LEFT "left"
 #define RIGHT "right"
+#define SHOWIMAGES true
 
 class SparseStereo{
   private:
@@ -64,12 +65,12 @@ class SparseStereo{
     string scene, leftCam, rightCam;
     string rightImageStr = "right_image.png";
     string leftImageStr = "left_image.png";
-    string pathRightImage = "Images/"+rightImageStr;
-    string pathLeftImage = "Images/"+leftImageStr;
+    string pathRightImage = "../Images/"+rightImageStr;
+    string pathLeftImage = "../Images/"+leftImageStr;
     string leftImageNoiseStr = "left_image_noise.png";
     string rightImageNoiseStr = "right_image_noise.png";
-    string pathLeftImageNoise = "Images/"+leftImageNoiseStr;
-    string pathRightImageNoise = "Images/"+rightImageNoiseStr;
+    string pathLeftImageNoise = "../Images/"+leftImageNoiseStr;
+    string pathRightImageNoise = "../Images/"+rightImageNoiseStr;
 
     double leftFovy, rightFovy;
     int leftWidth, leftHeight, rightWidth, rightHeight;
@@ -328,7 +329,7 @@ class SparseStereo{
         array<Mat,2> points;
         points[0] = correspondingPoints[i].first;
         points[1] = correspondingPoints[i].second;
-        cout << "Point no: " << i+1 << endl;
+        //cout << "Point no: " << i+1 << endl;
 
 
         auto leftMInf = projectToInf(leftPp[0], points[0]);
@@ -338,7 +339,7 @@ class SparseStereo{
         auto rightPluckerLine = computePluckerLine(rightOC(Range(0,3), Range(0,1)), rightMInf);
 
         auto intersection = computePluckerIntersection(leftPluckerLine, rightPluckerLine);
-        cout << "Intersection: " << endl << intersection << endl;
+        //cout << "Intersection: " << endl << intersection << endl;
         points3D.push_back(intersection);
 
         // Compare with OpenCV triangulation
@@ -364,8 +365,8 @@ class SparseStereo{
     //Finds the centers of the cylinders.
 
     array<pair<Mat, Mat>,3> findCenters(){
-      auto leftPoints = findCenter("/home/student/Desktop/left_image.ppm");
-      auto rightPoints = findCenter("/home/student/Desktop/right_image.ppm");
+      auto leftPoints = findCenter(pathLeftImageNoise, SHOWIMAGES);
+      auto rightPoints = findCenter(pathRightImageNoise, SHOWIMAGES);
       array<pair<Mat, Mat>,3> correspondingPoints;
       for(int i = 0; i < NUM_OBJECTS; i++){
         pair<Mat, Mat> p;
@@ -390,9 +391,15 @@ int main(int argc, char** argv) {
   }
 
   SparseStereo sparseStereo(argv);
-  //sparseStereo.takeImages();
-  //sparseStereo.addNoiseToImages(0,0.1);
+  sparseStereo.takeImages();
+  sparseStereo.addNoiseToImages(0,0.1);
   vector<Mat> points3D = sparseStereo.stereopsis();
+  cout << "-----------------------------------" << endl;
+  cout << "The 3D points: " << endl << endl;
+  for(int i = 0; i < points3D.size(); i++){
+    cout << points3D[i] << endl << endl;
+  }
+  cout << "-----------------------------------" << endl;
 
 
 
