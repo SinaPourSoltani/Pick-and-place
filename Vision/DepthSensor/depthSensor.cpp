@@ -15,14 +15,22 @@
 #include <rw/core/PropertyMap.hpp>
 
 #include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/registration/transformation_estimation_svd.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/ModelCoefficients.h>
+#include <pcl/kdtree/kdtree.h>
 #include <pcl/common/random.h>
 #include <pcl/common/time.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/spin_image.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/registration/transformation_estimation_svd.h>
-#include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/segmentation/extract_clusters.h>
 
 #include <iostream>
 #include <thread>
@@ -36,7 +44,6 @@
 using namespace std;
 
 using namespace pcl;
-//using namespace pcl::common;
 using namespace pcl::io;
 using namespace pcl::visualization;
 
@@ -51,6 +58,84 @@ using rw::graphics::SceneViewer;
 using rw::loaders::WorkCellLoader;
 using rw::models::WorkCell;
 using rw::sensor::Image;
+
+class DepthSensor {
+public:
+    DepthSensor(){};
+    DepthSensor(string workcellFilePath) :
+    workcellFilePath(workcellFilePath){
+        loadWorkcellAndCamera();
+        mallocPointClouds();
+        RobWorkStudioApp app("");
+        thread t([&](){
+            // Wait for app to launch
+            while (!app.isRunning()) {
+                TimerUtil::sleepMs(1000);
+                cout << "Waiting for launch.." << endl;
+            }
+            RobWorkStudio* rwstudio = app.getRobWorkStudio();
+            rwstudio->postOpenWorkCell(workcellFilePath);
+            TimerUtil::sleepMs(2000);
+            
+            findObjects();
+            
+            app.close();
+        });
+        t.detach();
+        app.run();
+    };
+    
+    void findObjects(){}
+    
+    ~DepthSensor(){};
+
+private:
+    // Helper functions
+    void loadWorkcellAndCamera(){
+        // Load workcell
+        const WorkCell::Ptr wc = WorkCellLoader::Factory::load(workcellFilePath);
+        if (wc.isNull())
+            RW_THROW("WorkCell could not be loaded.");
+        
+        // Load 25D camera frame
+        Frame* const cameraFrame = wc->findFrame(camera25D);
+        if (cameraFrame == nullptr)
+            RW_THROW("Camera frame could not be found.");
+        
+        // Read camera properties from <scene>
+        const PropertyMap& properties = cameraFrame->getPropertyMap();
+        if (!properties.has(camera25D))
+            RW_THROW("Camera frame does not have Camera property.");
+        const string parameters = properties.get<string>(camera25D);
+        
+        istringstream iss (parameters, istringstream::in);
+        iss >> fovy >> width >> height;
+        cout << "Camera properties: fov " << fovy << " width " << width << " height " << height << endl;
+    };
+    void mallocPointClouds(){
+        cloud = ownedPtr(new PointCloud<PointXYZ>);
+        plane = ownedPtr(new PointCloud<PointXYZ>);
+        randomPoints = ownedPtr(new PointCloud<PointXYZ>);
+        pclNormals = ownedPtr(new PointCloud<PointNormal>);
+        coefficients = ownedPtr(new ModelCoefficients);
+    }
+    
+    // Attributes
+    string workcellFilePath;
+    string camera25D = "Scanner25D";
+    double fovy; int width, height;
+    
+    PointCloud<PointXYZ>::Ptr cloud;
+    PointCloud<PointXYZ>::Ptr plane;
+    PointCloud<PointXYZ>::Ptr randomPoints;
+    PointCloud<PointNormal>::Ptr pclNormals;
+    ModelCoefficients::Ptr coefficients;
+    vector<PointCloud<PointXYZ>::Ptr> objectClouds;
+    
+};
+
+
+
 
 void grapPointCloud(PointCloud<PointXYZ>::Ptr cloud, WorkCell::Ptr wc, RobWorkStudio* rwstudio, Frame* cameraFrame, double fovy, int width, int height){
     // Inspiration from: https://www.robwork.dk/manual/simulated_sensors/
@@ -74,7 +159,6 @@ void grapPointCloud(PointCloud<PointXYZ>::Ptr cloud, WorkCell::Ptr wc, RobWorkSt
     }
     *cloud = *pclScene;
 }
-
 PointCloud<PointNormal>::Ptr calculateSurfaceNormals(PointCloud<PointXYZ>::Ptr cloud){
     // Inspiration from: https://pcl.readthedocs.io/projects/tutorials/en/latest/normal_estimation.html
     // Create the normal estimation class, and pass the input dataset to it
@@ -100,7 +184,64 @@ PointCloud<PointNormal>::Ptr calculateSurfaceNormals(PointCloud<PointXYZ>::Ptr c
     
     return cloud_with_normals;
 }
+ModelCoefficients::Ptr planeModelSegmentation(PointCloud<PointXYZ>::Ptr cloud, PointCloud<PointXYZ>::Ptr plane){
+    PointCloud<PointXYZ>::Ptr planeModel (new PointCloud<PointXYZ>);
+    ModelCoefficients::Ptr coefficients (new ModelCoefficients);
+    PointIndices::Ptr inliers (new PointIndices);
+    // Create the segmentation object
+    SACSegmentation<PointXYZ> seg;
+    // Optional
+    seg.setOptimizeCoefficients (true);
+    // Mandatory
+    seg.setModelType (SACMODEL_PLANE);
+    seg.setMethodType (SAC_RANSAC);
+    seg.setDistanceThreshold (0.01);
+    
+    seg.setInputCloud (cloud);
+    seg.segment (*inliers, *coefficients);
+    
+    if (inliers->indices.size () == 0)
+    {
+        PCL_ERROR ("Could not estimate a planar model for the given dataset.\n");
+        return coefficients;
+    }
+    
+    std::cerr << "Model coefficients: " << coefficients->values[0] << " "
+    << coefficients->values[1] << " "
+    << coefficients->values[2] << " "
+    << coefficients->values[3] << std::endl;
+    
+    std::cerr << "Model inliers: " << inliers->indices.size () << std::endl;
+    for (const auto& idx: inliers->indices) {
+        std::cerr << idx << "    " << cloud->points[idx].x << " "
+        << cloud->points[idx].y << " "
+        << cloud->points[idx].z << std::endl;
+        planeModel->push_back(cloud->points[idx]);
+    }
+    
+    *plane = *planeModel;
+    
+    return coefficients;
+}
 
+float sq(float x){
+    return x*x;
+}
+PointXYZ add(PointXYZ a, PointXYZ b){
+    return PointXYZ(a.x + b.x, a.y + b.y, a.z + b.z);
+}
+PointXYZ sub(PointXYZ a, PointXYZ b){
+    return PointXYZ(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+PointXYZ divide(PointXYZ a, int d){
+    return PointXYZ(a.x / d, a.y / d, a.z / d);
+}
+PointXYZ cross(PointXYZ a, PointXYZ b){
+    return PointXYZ(a.y*b.z - a.z*b.y, a.x*b.z - a.z*b.x, a.x*b.y - a.y*b.x);
+}
+float dot(PointXYZ a, PointXYZ b){
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
 void voxelGrid(PointCloud<PointXYZ>::Ptr cloud){
     // Inspiration from: https://pcl.readthedocs.io/projects/tutorials/en/latest/voxel_grid.html?
     cout << "Creating voxel grid.." << endl;
@@ -134,6 +275,130 @@ void addNoise(PointCloud<PointXYZ>::Ptr cloud, double std){
         cloud->points[i].z += noisez;
     }
 }
+void removePoints(PointCloud<PointXYZ>::Ptr cloud, ModelCoefficients::Ptr plane, PointXYZ planePoint, bool behind = true){
+    PointCloud<PointXYZ>::Ptr reducedCloud(new PointCloud<PointXYZ>);
+    double a = plane->values[0];
+    double b = plane->values[1];
+    double c = plane->values[2];
+    //double d = plane->values[3];
+    
+    int i = 0;
+    for(auto point : cloud->points) {
+        PointXYZ planePoint2point = sub(point, planePoint);
+        double dot = a * planePoint2point.x + b * planePoint2point.y + c * planePoint2point.z;
+        cout << i++ << " Dir: " << dot << endl;
+        if(behind){
+            if( dot > 0 ){
+                reducedCloud->push_back(point);
+            }
+        } else {
+            if(dot < -0.1 ){
+                reducedCloud->push_back(point);
+            }
+        }
+    }
+    *cloud = *reducedCloud;
+}
+vector<PointCloud<PointXYZ>::Ptr> cluster(PointCloud<PointXYZ>::Ptr cloud){
+    // Creating the KdTree object for the search method of the extraction
+    search::KdTree<PointXYZ>::Ptr tree (new search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud (cloud);
+
+    vector<PointIndices> cluster_indices;
+    EuclideanClusterExtraction<PointXYZ> ec;
+    ec.setClusterTolerance (0.02); // 2cm
+    ec.setMinClusterSize (100);
+    ec.setMaxClusterSize (25000);
+    ec.setSearchMethod (tree);
+    ec.setInputCloud (cloud);
+    ec.extract (cluster_indices);
+    
+    vector<PointCloud<PointXYZ>::Ptr> objectClouds = {};
+    for(int i = 0; i < cluster_indices.size(); i++){
+        PointCloud<PointXYZ>::Ptr object(new PointCloud<PointXYZ>);
+        for(int j = 0; j < cluster_indices[i].indices.size(); j++){
+            object->push_back(cloud->points[cluster_indices[i].indices[j]]);
+        }
+        objectClouds.push_back(object);
+    }
+    
+    return objectClouds;
+}
+PointXYZ centroid(PointCloud<PointXYZ>::Ptr cloud){
+    PointXYZ centroid(0,0,0);
+    int num_points = cloud->size();
+    for(int i = 0; i < num_points; i++){
+        centroid = add(centroid, cloud->points[i]);
+    }
+    centroid = divide(centroid, num_points);
+    return centroid;
+}
+vector<PointCloud<PointXYZ>::Ptr> sortClusters(vector<PointCloud<PointXYZ>::Ptr> objectClouds, int axis, bool increasingOrder=true){
+    vector<float> sortingAxisCentroid = {};
+    vector<int> objectIdx = {};
+    
+    for(int i = 0; i < objectClouds.size(); i++){
+        PointXYZ c = centroid(objectClouds[i]);
+        Vector3D<float> centroid(c.x, c.y, c.z);
+        sortingAxisCentroid.push_back(centroid[axis]);
+        objectIdx.push_back(i);
+    }
+    
+    
+    // sort
+    int N = sortingAxisCentroid.size();
+    bool swapped = true;
+    while(swapped){
+        swapped = false;
+        for(int i = 1; i < N; i++){
+            if( ( increasingOrder && sortingAxisCentroid[i-1] > sortingAxisCentroid[i] )
+               || ( !increasingOrder && sortingAxisCentroid[i-1] < sortingAxisCentroid[i] )){
+                // swap object axis value
+                float tmp = sortingAxisCentroid[i];
+                sortingAxisCentroid[i] = sortingAxisCentroid[i-1];
+                sortingAxisCentroid[i-1] = tmp;
+                
+                // swap corresponding object index
+                int tmpIdx = objectIdx[i];
+                objectIdx[i] = objectIdx[i-1];
+                objectIdx[i-1] = tmpIdx;
+                
+                swapped = true;
+            }
+        }
+    }
+    
+    cout << "after sorting" << endl;
+    for (auto centroid : sortingAxisCentroid) {
+        cout << centroid << endl;
+    }
+    
+    
+    vector<PointCloud<PointXYZ>::Ptr> sortedClouds = {};
+    // put clouds into new sorted vector
+    for (int i = 0; i < N; i++) {
+        sortedClouds.push_back(objectClouds[objectIdx[i]]);
+    }
+    return sortedClouds;
+}
+PointXYZ maxPointInAxis(PointCloud<PointXYZ>::Ptr cloud){
+    PointXYZ maxPointInAxis(0,0,0);
+    for(auto point : cloud->points) {
+        if (abs(point.z) > maxPointInAxis.z) {
+            maxPointInAxis = point;
+        }
+    }
+    return maxPointInAxis;
+}
+void removePointsInAxis(PointCloud<PointXYZ>::Ptr cloud, PointXYZ maxPoint, bool behind=true){
+    PointCloud<PointXYZ>::Ptr reducedCloud(new PointCloud<PointXYZ>);
+    for(auto point : cloud->points) {
+        if (point.z > maxPoint.z) {
+            reducedCloud->push_back(point);
+        }
+    }
+    *cloud = *reducedCloud;
+}
 void passthrough(PointCloud<PointXYZ>::Ptr cloud){
     PointCloud<PointXYZ>::Ptr objectsPassthrough(new PointCloud<PointXYZ>);
     for(auto &p : cloud->points) {
@@ -143,25 +408,6 @@ void passthrough(PointCloud<PointXYZ>::Ptr cloud){
         }
     }
     *cloud = *objectsPassthrough;
-}
-
-PointXYZ add(PointXYZ a, PointXYZ b){
-    return PointXYZ(a.x + b.x, a.y + b.y, a.z + b.z);
-}
-PointXYZ sub(PointXYZ a, PointXYZ b){
-    return PointXYZ(a.x - b.x, a.y - b.y, a.z - b.z);
-}
-PointXYZ divide(PointXYZ a, int d){
-    return PointXYZ(a.x / d, a.y / d, a.z / d);
-}
-float sq(float x){
-    return x*x;
-}
-PointXYZ cross(PointXYZ a, PointXYZ b){
-    return PointXYZ(a.y*b.z - a.z*b.y, a.x*b.z - a.z*b.x, a.x*b.y - a.y*b.x);
-}
-float dot(PointXYZ a, PointXYZ b){
-    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 PointNormal points2plane(vector<PointXYZ> threepoints){
@@ -193,7 +439,6 @@ PointCloud<PointXYZ>::Ptr find_inliers(PointNormal plane, PointCloud<PointXYZ>::
     }
     return inliers;
 }
-
 float calc_std(PointCloud<PointXYZ>::Ptr cloud){
     // Tested and works
     PointXYZ centroid(0,0,0);
@@ -211,7 +456,6 @@ float calc_std(PointCloud<PointXYZ>::Ptr cloud){
     
     return sqrt(sum);
 }
-
 PointCloud<PointXYZ>::Ptr detectPlane(PointCloud<PointXYZ>::Ptr cloud, PointCloud<PointNormal>::Ptr bplane,PointCloud<PointXYZ>::Ptr brp, int forseeable_support, float threshold, float alpha = 0.95) {
     float bestSupport = 0;
     PointNormal bestPlane(0,0,0);
@@ -263,6 +507,8 @@ int main(int argc, char**argv) {
     string WC_FILE = argv[1];
     string camera25D = "Scanner25D";
     
+    DepthSensor ds(WC_FILE);
+    /*
     // Load workcell
     const WorkCell::Ptr wc = WorkCellLoader::Factory::load(WC_FILE);
     if (wc.isNull())
@@ -289,6 +535,8 @@ int main(int argc, char**argv) {
     PointCloud<PointXYZ>::Ptr plane(new PointCloud<PointXYZ>);
     PointCloud<PointXYZ>::Ptr randomPoints(new PointCloud<PointXYZ>);
     PointCloud<PointNormal>::Ptr pclNormals(new PointCloud<PointNormal>);
+    ModelCoefficients::Ptr coefficients(new ModelCoefficients);
+    vector<PointCloud<PointXYZ>::Ptr> objectClouds;
     
     RobWorkStudioApp app("");
     thread t([&]() {
@@ -302,11 +550,34 @@ int main(int argc, char**argv) {
         TimerUtil::sleepMs(2000);
         
         grapPointCloud(cloud, wc, rwstudio, cameraFrame, fovy, width, height);
-        voxelGrid(cloud);
+        //voxelGrid(cloud);
         //passthrough(cloud);
         //addNoise(cloud, 0.01);
-        plane = detectPlane(cloud, pclNormals, randomPoints, 50000, 0.0001);
+        //plane = detectPlane(cloud, pclNormals, randomPoints, 50000, 0.0001);
         
+        coefficients = planeModelSegmentation(cloud, plane);
+        //PointXYZ mostZPoint = maxPointInAxis(plane);
+        removePoints(cloud, coefficients, plane->points[0], true);
+        
+        
+        coefficients = planeModelSegmentation(cloud, plane);
+        removePoints(cloud, coefficients, plane->points[0], false);
+        objectClouds = cluster(cloud);
+        cout << "BEFORE: " << endl;
+        for (auto object : objectClouds) {
+            cout << centroid(object) << endl;
+        }
+        objectClouds = sortClusters(objectClouds, 0, false);
+        
+        cout << "AFTER: " << endl;
+        for (auto object : objectClouds) {
+            randomPoints->push_back(centroid(object));
+            cout << centroid(object) << endl;
+        }
+        
+        cout << "K: " << objectClouds.size() << endl;
+        
+        //removePointsInAxis(cloud, mostZPoint, true);
         //pclNormals = calculateSurfaceNormals(cloud);
         app.close();
     });
@@ -315,10 +586,23 @@ int main(int argc, char**argv) {
     
     PCLVisualizer v("PointCloud");
     v.addPointCloud<PointXYZ>(cloud, "points");
-    v.addPointCloud<PointXYZ>(plane, PointCloudColorHandlerCustom<PointXYZ>(plane, 0,255, 0),"plane");
-    v.addPointCloud<PointXYZ>(randomPoints, PointCloudColorHandlerCustom<PointXYZ>(plane, 255,0, 0),"randompoints");
+    
+    vector<string> colors = {"Red","Green","Blue"};
+    for(int i = 0; i < objectClouds.size(); i++){
+        v.addPointCloud<PointXYZ>(objectClouds[i],
+                                  PointCloudColorHandlerCustom<PointXYZ>(objectClouds[i],
+                                                                         ((i == 0) ? 255 : 0),
+                                                                         ((i == 1) ? 255 : 0),
+                                                                         ((i == 2) ? 255 : 0))
+                                  , "object" + colors[i]);
+    }
+    
+    //v.addPointCloud<PointXYZ>(plane, PointCloudColorHandlerCustom<PointXYZ>(plane, 0,255, 0),"plane");
+    //v.addPlane(*coefficients, "detectedPlane");
+    v.addPointCloud<PointXYZ>(randomPoints, PointCloudColorHandlerCustom<PointXYZ>(randomPoints, 255,255, 255),"randompoints");
     v.addPointCloudNormals<PointNormal>(pclNormals,1,0.6,"normals");
     v.spin();
-
+    */
+     
     return 0;
 }
