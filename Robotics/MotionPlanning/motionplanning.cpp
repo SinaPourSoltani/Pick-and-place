@@ -79,6 +79,28 @@ public:
         };
 
     // collision free solution closes to current configuration
+    float distanceBetweenJoinsConfigurations(Q c1, Q c2){
+      int num_joints = c1.size();
+      float weight = 5;
+      float distance = 0;
+      for(unsigned int joint = 0; joint < num_joints; joint++){
+        distance += weight-- * (c1[joint] - c2[joint]) * (c1[joint] - c2[joint]);
+      }
+      return distance;
+    }
+
+    Q nearestJointConfiguration(Q currentConfig, vector<Q> possibleConfigs){
+      Q bestConfig = possibleConfigs[0];
+      float bestDistance = distanceBetweenJoinsConfigurations(currentConfig, bestConfig);
+      for(auto possibleConfig : possibleConfigs){
+        float distance = distanceBetweenJoinsConfigurations(currentConfig, possibleConfig);
+        if( distance < bestDistance){
+          bestConfig = possibleConfig;
+          bestDistance = distance;
+        }
+      }
+      return bestConfig;
+    }
 
     vector<Q> getJointConfigurations(Transform3D<> target, bool onlyCollisionFree = true) {
 
@@ -103,15 +125,15 @@ public:
         }
 
         isPickingOrPlacing(target);
-        if (target == home) {
+        if (compareTransforms(target, home)) {
             cout << "True home" << endl;
-            Q home(6,-0, -0.983092, -2.15122, -1.57965, 1.5708, -0);
+            Q home(6,-0.00403171, -0.991591, -1.99674, -1.72721, 1.5708, 0.00225147);
             return {home};
         }
 
         // Make "helper" transformations
         Transform3D<> frameBaseTGoal = Kinematics::frameTframe(frameRobotBase, frameTarget, state);
-        Transform3D<> frameTcpTRobotTcp = Kinematics::frameTframe(frameTcp, frameRobotTcp, state);
+        //Transform3D<> frameTcpTRobotTcp = Kinematics::frameTframe(frameTcp, frameRobotTcp, state);
 
         // get grasp frame in robot tool frame
         Transform3D<> targetAt = frameBaseTGoal * Transform3D<>(Vector3D<>(0,0,-0.07191),RPY<>(0,0,0));//* frameTcpTRobotTcp;
@@ -126,7 +148,7 @@ public:
             vector<Q> collisionFreeSolutions;
             CollisionDetector::Ptr detector = ownedPtr(new CollisionDetector(wc, rwlibs::proximitystrategies::ProximityStrategyFactory::makeDefaultCollisionStrategy()));
 
-            for(int i = 0; i < solutions.size(); i++){
+            for(unsigned int i = 0; i < solutions.size(); i++){
                 // set the robot in that configuration and check if it is in collision
                 robot->setQ(solutions[i], state);
                 if( !detector->inCollision(state,NULL,true) ){
@@ -137,53 +159,40 @@ public:
             return collisionFreeSolutions;
         }
     }
-    InterpolatorTrajectory<Transform3D<> > linearlyInterpolate(bool withBlend = false){
+    InterpolatorTrajectory<Transform3D<> > linearlyInterpolate(vector<float> timeBetweenPoints, vector<float> blendFractions = {}/*bool withBlend = false*/){
         // Inspired from https://www.robwork.dk/apidoc/cpp/doxygen/classrw_1_1trajectory_1_1InterpolatorTrajectory.html#a8603623d1793b8b55400f60de893d62d
-        //vector<float> linearTimes = {5,5, 5,5, 5,5, 5,5}
-        //vector<float> blendFractions = {0.8};
-        float linearTime = 1;
-        float blendTime = linearTime * 0.5;
-        LinearInterpolator<Transform3D<> >::Ptr hm2pka = ownedPtr(new LinearInterpolator<Transform3D<> >(home, pickApproach, linearTime));
-        LinearInterpolator<Transform3D<> >::Ptr pka2pk = ownedPtr(new LinearInterpolator<Transform3D<> >(pickApproach, pick, linearTime));
-        LinearInterpolator<Transform3D<> >::Ptr pk2pkd = ownedPtr(new LinearInterpolator<Transform3D<> >(pick, pickDepart, linearTime));
-        LinearInterpolator<Transform3D<> >::Ptr pkd2hm = ownedPtr(new LinearInterpolator<Transform3D<> >(pickDepart, home, linearTime));
+        vector<Transform3D<> > points = getPointTrajectorySequence();
 
-        LinearInterpolator<Transform3D<> >::Ptr hm2pla = ownedPtr(new LinearInterpolator<Transform3D<> >(home, placeApproach, linearTime));
-        LinearInterpolator<Transform3D<> >::Ptr pla2pl = ownedPtr(new LinearInterpolator<Transform3D<> >(placeApproach, place, linearTime));
-        LinearInterpolator<Transform3D<> >::Ptr pl2pld = ownedPtr(new LinearInterpolator<Transform3D<> >(place, placeDepart, linearTime));
-        LinearInterpolator<Transform3D<> >::Ptr pld2hm = ownedPtr(new LinearInterpolator<Transform3D<> >(placeDepart, home, linearTime));
 
-        ParabolicBlend<Transform3D<> >::Ptr blend_hm2pk = ownedPtr(new ParabolicBlend<Transform3D<> >(hm2pka, pka2pk, blendTime));
-        ParabolicBlend<Transform3D<> >::Ptr blend_pk2hm = ownedPtr(new ParabolicBlend<Transform3D<> >(pk2pkd, pkd2hm, blendTime));
-        ParabolicBlend<Transform3D<> >::Ptr blend_pkd2pla = ownedPtr(new ParabolicBlend<Transform3D<> >(pkd2hm, hm2pla, blendTime));
-        ParabolicBlend<Transform3D<> >::Ptr blend_hm2pl = ownedPtr(new ParabolicBlend<Transform3D<> >(hm2pla, pla2pl, blendTime));
-        ParabolicBlend<Transform3D<> >::Ptr blend_pl2hm = ownedPtr(new ParabolicBlend<Transform3D<> >(pl2pld, pld2hm, blendTime));
+        if(points.size() - 1 != timeBetweenPoints.size() || (!blendFractions.empty() && blendFractions.size() != timeBetweenPoints.size())){
+          RW_THROW("linearlyInterpolate crash since input vectors doesn't match! <timeBetweenPoints> and <blendFractions> should have size one less than <points>.");
+        }else if(!blendFractions.empty()){
+          if(blendFractions[0] != 0.0){
+            RW_THROW("First blend time must be zero!");
+          }
+        }
 
         InterpolatorTrajectory<Transform3D<> > trajectory;
 
-        if (withBlend){
-            trajectory.add(hm2pka);
-            trajectory.add(blend_hm2pk, pka2pk);
-            trajectory.add(pk2pkd);
-            trajectory.add(blend_pk2hm, pkd2hm);
-
-            trajectory.add(blend_pkd2pla, hm2pla);
-
-            trajectory.add(blend_hm2pl, pla2pl);
-            trajectory.add(pl2pld);
-            trajectory.add(blend_pl2hm, pld2hm);
-
-        } else {
-            trajectory.add(hm2pka);
-            trajectory.add(pka2pk);
-            trajectory.add(pk2pkd);
-            trajectory.add(pkd2hm);
-            trajectory.add(hm2pla);
-            trajectory.add(pla2pl);
-            trajectory.add(pl2pld);
-            trajectory.add(pld2hm);
+        vector<LinearInterpolator<Transform3D<> >::Ptr> linearPoints;
+        for(unsigned int point = 0; point < points.size() - 1; point++){
+          linearPoints.push_back(ownedPtr(new LinearInterpolator<Transform3D<> >(points[point], points[point + 1], timeBetweenPoints[point])));
         }
 
+        if(blendFractions.empty()){
+          for(unsigned int i = 0; i < linearPoints.size(); i++){
+            trajectory.add(linearPoints[i]);
+          }
+        }else{
+          for(unsigned int i = 0; i < linearPoints.size(); i++){
+            if(blendFractions[i] == 0){
+                trajectory.add(linearPoints[i]);
+            }else{
+              ParabolicBlend<Transform3D<> >::Ptr blend = ownedPtr(new ParabolicBlend<Transform3D<> >(linearPoints[i - 1], linearPoints[i], timeBetweenPoints[i]*blendFractions[i]));
+              trajectory.add(blend, linearPoints[i]);
+            }
+          }
+        }
         return trajectory;
     }
     QPath trajectoryToQPath(InterpolatorTrajectory<Transform3D<> > trajectory){
@@ -191,25 +200,25 @@ public:
         for (double t = 0; t <= trajectory.duration(); t += DT) {
             Transform3D<> x = trajectory.x(t);
             vector<Q> qs = getJointConfigurations(x);
-            qvector.push_back(qs[0]);
+            qvector.push_back(((t==0) ? qs[0] : nearestJointConfiguration(qvector.back(),qs)));
+
         }
         QPath qpath(qvector);
         return qpath;
     }
 
     vector<QPath> RRTInterpolate(double extend) {
-        vector<Transform3D<> > interpolationTransformsPoints = getPointTrajectorySequence();
+        vector<Transform3D<> > interpolationTransformsPoints = getPointTrajectorySequence(false);
         vector<Q> jointPoints;
         for(auto tf : interpolationTransformsPoints){
             vector<Q> jointConfigs = getJointConfigurations(tf);
-            cout << "Joint configurations size: " << jointConfigs.size() << endl;
             jointPoints.push_back(jointConfigs[0]); // TODO change to more optimal configuration rather than simply picking the first
         }
         return RRTConnect(jointPoints, extend);
     }
     vector<QPath> RRTConnect(vector<Q> interpolationJointsPoints, double extend){
         vector<QPath> totalPath;
-        for (int i = 0; i < interpolationJointsPoints.size() - 1; i++) {
+        for (unsigned int i = 0; i < interpolationJointsPoints.size() - 1; i++) {
             Q from(interpolationJointsPoints[i]);
             Q to(interpolationJointsPoints[i + 1]);
             totalPath.push_back(RRTConnectQtoQ(from, to, extend));
@@ -231,6 +240,7 @@ public:
 
         ProximityData pdata;
         robot->setQ(from,state);
+        isPickingOrPlacing();
         if (detector.inCollision (state, pdata))
             RW_THROW ("Initial configuration in collision! can not plan a path.");
         robot->setQ (to, state);
@@ -261,9 +271,10 @@ public:
         state = wc->getDefaultState();
         TimedStatePath tStatePath;
         double time = 0;
-        for(int i = 0; i < fullpath.size(); i++){
-            for(int j = 0; j < fullpath[i].size(); j++){
+        for(unsigned int i = 0; i < fullpath.size(); i++){
+            for(unsigned int j = 0; j < fullpath[i].size(); j++){
                 robot->setQ(fullpath[i][j], state);
+                isPickingOrPlacing();
                 tStatePath.push_back(TimedState(time, state));
                 time += DT_VISU;
             }
@@ -275,7 +286,7 @@ public:
         state = wc->getDefaultState();
         TimedStatePath tStatePath;
         double time = 0;
-        for(int j = 0; j < path.size(); j++){
+        for(unsigned int j = 0; j < path.size(); j++){
             robot->setQ(path[j], state);
             isPickingOrPlacing();
             tStatePath.push_back(TimedState(time, state));
@@ -300,18 +311,22 @@ protected:
         placeDepart = Transform3D<>(placeApproach.P(),
                                     home.R());
     }
-    vector<Transform3D<> > getPointTrajectorySequence(){
-        return {home, pick, home, place, home};
+    vector<Transform3D<> > getPointTrajectorySequence(bool P2P = true){
+        if(P2P){
+          return {home, pickApproach, pick, pickDepart, home, placeApproach, place, placeDepart, home};
+        }
+        return {home, pick, place, home};
     }
 
     bool compareTransforms(Transform3D<> t1, Transform3D<> t2){
-        double threshold = 0.01 * 1000;
+        double threshold = 0.015 * 1000;
         for(int i = 0; i < 3; i++){
-            int p1 =(int)(t1.P()(i) * 1000);
-            int p2 =(int)(t2.P()(i) * 1000);
+            int p1 = round(t1.P()(i) * 1000);
+            int p2 = round(t2.P()(i) * 1000);
             //cout << endl << "t1: " << p1 << " - t2: " << p2;
             if( p1 != p2) {
               if(i == 2 && p1 <= p2 + threshold && p1 >= p2 - threshold){
+                cout << "EQUAL TRANSFORMS" << endl;
                 return true;
               }
                 //cout << " !=";
@@ -326,18 +341,13 @@ protected:
     }
 
     void isPickingOrPlacing(Transform3D<> H = Transform3D<>::identity()){
-        float threshold = 0.5;
-
         Transform3D<> tcpH = H;
-        Frame * tcpFrame = wc->findFrame("GraspTCP");
+        Frame * tcpFrame = wc->findFrame("WSG50.Base");
         Frame * objectFrame = wc->findFrame("CylinderRed");
         if (H == Transform3D<>::identity()){
-            //cout << "Identity matrix" << endl;
             tcpH = tcpFrame->wTf(state);
-        }
-        //cout << endl << "is it?: " << endl;
 
-        //cout << "TCP: " << tcpH << endl << "PickT: " << pick << endl;
+        }
         if(compareTransforms(tcpH, pick)) {
             cout << "picked" << endl;
             Kinematics::gripFrame(objectFrame, tcpFrame, state);
@@ -397,14 +407,16 @@ int main(int argc, char**argv){
     Transform3D<> place(Vector3D<>(PLACE_CENTER_X, PLACE_CENTER_Y, 0.191), RPY<>(0,Deg2Rad * 180,0));
 
     MotionPlanner mp(wc, robot, pick, place, state);
-    //InterpolatorTrajectory<Transform3D<> > trajectory = mp.linearlyInterpolate();
-    //QPath lipath = mp.trajectoryToQPath(trajectory);
+    vector<float> timeBetweenPoints = {1, 1, 1, 1, 1, 1, 1, 1};
+    vector<float> blendFractions = {0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 0.0, 0.5};
+    InterpolatorTrajectory<Transform3D<> > trajectory = mp.linearlyInterpolate(timeBetweenPoints, blendFractions);
+    QPath lipath = mp.trajectoryToQPath(trajectory);
     //mp.writeTrajectoryToFile(trajectory, trajectoryFilePath);
-    //mp.writeQPathToFile(lipath, qpathFilePath);
+    mp.writeQPathToFile(lipath, qpathFilePath);
 
     // TODO Attach object
     // choose closest joint values
 
-    vector<QPath> rrtpath = mp.RRTInterpolate(0.05);
-    mp.writeQPathVectorToFile(rrtpath, "qconfig.rwplay");
+    //vector<QPath> rrtpath = mp.RRTInterpolate(0.05);
+    //mp.writeQPathVectorToFile(rrtpath, "qconfig.rwplay");
 }
