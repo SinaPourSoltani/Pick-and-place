@@ -90,12 +90,12 @@ public:
         //calculateSurfaceNormals();
         
         
-        // Find biggest surface (Tabletop)
+        // Find biggest planar surface (Tabletop)
         // And remove points beneath
         planeModelSegmentation();
         removePoints(true);
         
-        // Find biggest remaining surface (Obstacle)
+        // Find biggest remaining planar surface (Obstacle)
         // And remove points behind
         planeModelSegmentation();
         removePoints(false);
@@ -110,7 +110,6 @@ public:
         }
         
     }
-    
     void visualizePointClouds(){
         PCLVisualizer v("PointCloud");
         v.addPointCloud<PointXYZ>(cloud, "points");
@@ -258,19 +257,20 @@ private:
             PCL_ERROR ("Could not estimate a planar model for the given dataset.\n");
             return;
         }
-        
+        /*
         std::cerr << "Model coefficients: " << coeffs->values[0] << " "
         << coeffs->values[1] << " "
         << coeffs->values[2] << " "
         << coeffs->values[3] << std::endl;
-        
-        std::cerr << "Model inliers: " << inliers->indices.size () << std::endl;
+        */
+        //std::cerr << "Model inliers: " << inliers->indices.size () << std::endl;
         for (const auto& idx: inliers->indices) {
-            std::cerr << idx << "    " << cloud->points[idx].x << " "
-            << cloud->points[idx].y << " "
-            << cloud->points[idx].z << std::endl;
+            //std::cerr << idx << "    " << cloud->points[idx].x << " "
+            //<< cloud->points[idx].y << " "
+            //<< cloud->points[idx].z << std::endl;
             planeModel->push_back(cloud->points[idx]);
         }
+        
         
         *plane = *planeModel;
         *coefficients = *coeffs;
@@ -369,7 +369,6 @@ private:
     vector<PointXYZ> getCentroidsOfObjects(){
         vector<PointXYZ> centroids;
         for(auto object : objectClouds){
-            cout << object->size() << endl;
             centroids.push_back(centroid(object));
         }
         return centroids;
@@ -404,13 +403,6 @@ private:
         centroid = divide(centroid, num_points);
         return centroid;
     }
-    /*void createCylinder(float Z, float R){
-        for(float z = 0; z < Z; z += 0.1){
-            for(float angle = 0; angle < 2 * 3.1415; angle += 0.01){
-                
-            }
-        }
-    }*/
     
     // Attributes
     WorkCell::Ptr wc;
@@ -433,7 +425,7 @@ int main(int argc, char**argv) {
         return 0;
     }
     string WC_FILE = argv[1];
-    
+    /*
     // Load
     PointCloud<PointXYZ>::Ptr object(new PointCloud<PointXYZ>);
     loadPCDFile(argv[1], *object);
@@ -442,7 +434,7 @@ int main(int argc, char**argv) {
     PCLVisualizer v("Before local alignment");
     v.addPointCloud<PointXYZ>(object, PointCloudColorHandlerCustom<PointXYZ>(object, 0, 255, 0), "object");
     v.spin();
-    
+    */
     DepthSensor ds(WC_FILE);
     ds.findObjects();
     ds.visualizePointClouds();
