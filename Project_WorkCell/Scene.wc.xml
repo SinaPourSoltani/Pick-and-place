@@ -45,7 +45,7 @@
             <Box x="0.30" y="0.01" z="0.30"/>
         </Drawable>
 				<Drawable name="PlaceObstacleGeo2" refframe="PlaceObstacle" colmodel="Enabled">
-            <Pos>-0.15 -0.15 0.10</Pos>
+            <Pos>-0.15 -0.15 0.05</Pos>
             <RPY>90 0 0</RPY>
             <RGB>0.5 0.5 0.5</RGB>
             <Box x="0.30" y="0.01" z="0.40"/>
