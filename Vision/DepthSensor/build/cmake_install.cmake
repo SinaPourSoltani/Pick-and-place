@@ -1,4 +1,4 @@
-# Install script for directory: /Users/sinapoursoltani/Documents/Syddansk Universitet/Kandidat/1. Semester/RoVi/Project/Pick-and-place/Vision/DepthSensor
+# Install script for directory: /Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Vision/DepthSensor
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/sinapoursoltani/Documents/Syddansk Universitet/Kandidat/1. Semester/RoVi/Project/Pick-and-place/Vision/DepthSensor/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Vision/DepthSensor/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

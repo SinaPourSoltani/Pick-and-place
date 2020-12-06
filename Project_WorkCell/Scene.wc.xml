@@ -20,13 +20,13 @@
 
 
 	<Frame name="GraspTCP" refframe="WSG50.TCP" type="Fixed">
-		<RPY>0 0 0</RPY> <Pos>0 0 0.15</Pos>
+		<RPY>0 0 0</RPY> <Pos>0 0 0.0</Pos>
 	</Frame>
-    
+
     <!-- Obstacle -->
-    <Frame name="Wall" refframe="Table" type="Movable" daf="true">
+    <Frame name="Obstacle" refframe="Table" type="Fixed">
         <RPY>0 0 0</RPY> <Pos>0.0 0.274 0.201</Pos>
-        <Drawable name="CylinderGeo" refframe="Wall" colmodel="Enabled">
+        <Drawable name="ObstacleGeo" refframe="Obstacle" colmodel="Enabled">
             <Pos>0 0 0</Pos>
             <RPY>0 0 0</RPY>
             <RGB>0.1 0.1 0.1</RGB>
@@ -36,46 +36,46 @@
     
     <!-- Our objects -->
     <Frame name="CylinderRed" refframe="Table" type="Movable" daf="true">
-        <RPY>0 0 0</RPY> <Pos>0.25 0.474 0.201</Pos>
-        <Drawable name="CylinderGeo" refframe="CylinderRed" colmodel="Enabled">
+        <RPY>0 0 0</RPY> <Pos>0.25 0.474 0.191</Pos>
+        <Drawable name="CylinderRedGeo" refframe="CylinderRed" colmodel="Enabled">
             <Pos>0 0 0</Pos>
             <RPY>0 0 0</RPY>
             <RGB>1.0 0 0</RGB>
             <Cylinder radius="0.04" z="0.16"/>
         </Drawable>
     </Frame>
-    <Frame name="GraspTargetCylinderRed" refframe="CylinderRed" type="Fixed">
-        <RPY>0 -90 0</RPY> <Pos>0 0 0</Pos>
+    <Frame name="GraspTargetCylinderRed" refframe="CylinderRed" type="Movable">
+        <RPY>0 0 0</RPY> <Pos>0 0 0</Pos>
     </Frame>
-    
-    
+
+
     <Frame name="CylinderGreen" refframe="Table" type="Movable" daf="true">
         <RPY>0 0 0</RPY> <Pos>0.00 0.474 0.150</Pos>
-        <Drawable name="CylinderGeo" refframe="CylinderGreen" colmodel="Enabled">
+        <Drawable name="CylinderGreenGeo" refframe="CylinderGreen" colmodel="Enabled">
             <Pos>0 0 0</Pos>
             <RPY>0 0 0</RPY>
             <RGB>0 1.0 0</RGB>
             <Cylinder radius="0.035" z="0.08"/>
         </Drawable>
     </Frame>
-    <Frame name="GraspTargetCylinderGreen" refframe="CylinderGreen" type="Fixed">
-        <RPY>0 -90 0</RPY> <Pos>0 0 0</Pos>
+    <Frame name="GraspTargetCylinderGreen" refframe="CylinderGreen" type="Movable">
+        <RPY>0 0 0</RPY> <Pos>0 0 0</Pos>
     </Frame>
-    
-    
+
+
     <Frame name="CylinderBlue" refframe="Table" type="Movable" daf="true">
         <RPY>0 0 0</RPY> <Pos>-0.25 0.474 0.170</Pos>
-        <Drawable name="CylinderGeo" refframe="CylinderBlue" colmodel="Enabled">
+        <Drawable name="CylinderBlueGeo" refframe="CylinderBlue" colmodel="Enabled">
             <Pos>0 0 0</Pos>
             <RPY>0 0 0</RPY>
             <RGB>0 0 1.0</RGB>
             <Cylinder radius="0.03" z="0.12"/>
         </Drawable>
     </Frame>
-    <Frame name="GraspTargetCylinderBlue" refframe="CylinderBlue" type="Fixed">
-        <RPY>0 -90 0</RPY> <Pos>0 0 0</Pos>
+    <Frame name="GraspTargetCylinderBlue" refframe="CylinderBlue" type="Movable">
+        <RPY>0 0 0</RPY> <Pos>0 0 0</Pos>
     </Frame>
-    
+
 
 <!-- Cameras -->
 
