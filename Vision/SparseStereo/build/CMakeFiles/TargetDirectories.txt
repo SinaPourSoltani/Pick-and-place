@@ -1,3 +1,0 @@
-/home/student/Desktop/Pick-and-place/Vision/SparseStereo/build/CMakeFiles/rebuild_cache.dir
-/home/student/Desktop/Pick-and-place/Vision/SparseStereo/build/CMakeFiles/sparseStereo.dir
-/home/student/Desktop/Pick-and-place/Vision/SparseStereo/build/CMakeFiles/edit_cache.dir

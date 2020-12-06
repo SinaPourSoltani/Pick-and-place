@@ -21,7 +21,7 @@ def dataframe_from_text_file(*objects):
     return dfs
 
 def plot_dataframe(df, color):
-    ax = sb.heatmap(df, cmap=color, annot=True)
+    ax = sb.heatmap(df, cmap=color)
     plt.show()
 
 

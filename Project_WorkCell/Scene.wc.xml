@@ -18,6 +18,9 @@
 	</Frame>
 	<Include file="wsg50/wsg50.xml"/>
 
+	<Frame name="TargetFrame" refframe="WORLD" type="Movable">
+		<RPY>0 0 0</RPY> <Pos>0 0 0</Pos>
+	</Frame>
 
 	<Frame name="GraspTCP" refframe="WSG50.TCP" type="Fixed">
 		<RPY>0 0 0</RPY> <Pos>0 0 0.0</Pos>
@@ -25,15 +28,30 @@
 
     <!-- Obstacle -->
     <Frame name="Obstacle" refframe="Table" type="Fixed">
-        <RPY>0 0 0</RPY> <Pos>0.0 0.274 0.201</Pos>
+        <RPY>0 0 0</RPY> <Pos>0.0 0.274 0.251</Pos>
         <Drawable name="ObstacleGeo" refframe="Obstacle" colmodel="Enabled">
             <Pos>0 0 0</Pos>
             <RPY>0 0 0</RPY>
             <RGB>0.1 0.1 0.1</RGB>
-            <Box x="0.90" y="0.01" z="0.20"/>
+            <Box x="0.90" y="0.01" z="0.30"/>
         </Drawable>
     </Frame>
-    
+		<Frame name="PlaceObstacle" refframe="Table" type="Fixed">
+        <RPY>0 0 0</RPY> <Pos>0.3 -0.374 0.251</Pos>
+        <Drawable name="PlaceObstacleGeo" refframe="PlaceObstacle" colmodel="Enabled">
+            <Pos>0 0 0</Pos>
+            <RPY>0 0 0</RPY>
+            <RGB>0.1 0.1 0.1</RGB>
+            <Box x="0.30" y="0.01" z="0.30"/>
+        </Drawable>
+				<Drawable name="PlaceObstacleGeo2" refframe="PlaceObstacle" colmodel="Enabled">
+            <Pos>-0.15 -0.15 0.05</Pos>
+            <RPY>90 0 0</RPY>
+            <RGB>0.5 0.5 0.5</RGB>
+            <Box x="0.30" y="0.01" z="0.40"/>
+        </Drawable>
+    </Frame>
+
     <!-- Our objects -->
     <Frame name="CylinderRed" refframe="Table" type="Movable" daf="true">
         <RPY>0 0 0</RPY> <Pos>0.25 0.474 0.191</Pos>
