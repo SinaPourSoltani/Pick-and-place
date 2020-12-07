@@ -1,12 +1,12 @@
 #include "../Robotics/MotionPlanning/motionplanning.cpp"
-#include "../Vision/DepthSensor/depthSensor.cpp"
-//#include "../Vision/SparseStereo/sparseStereo.cpp"
+#if D2D
+    #include "../Vision/SparseStereo/sparseStereo.cpp"
+#endif
+#if D3D
+    #include "../Vision/DepthSensor/depthSensor.cpp"
+#endif
 
 using namespace std;
-
-using namespace pcl;
-using namespace pcl::io;
-using namespace pcl::visualization;
 
 using namespace rw::core;
 using namespace rw::common;
@@ -21,8 +21,6 @@ using rw::models::WorkCell;
 using rw::sensor::Image;
 
 int main(int argc, char** argv){
-    cout << "Hello world" << endl;
-    
     if(argc < 2) {
         cout << "Usage: " << argv[0] << " <scene>" << endl;
         return 0;
@@ -48,10 +46,19 @@ int main(int argc, char** argv){
 
     Math::seed();
     
-    DepthSensor ds(scene);
-    ds.findObjects();
-    ds.visualizePointClouds();
-    
+    #if D2D
+        SparseStereo ss(scene);
+        ss.addNoiseToImages(0,0.1);
+        vector<Mat> objects = ss.stereopsis();
+        for(unsigned int i = 0; i < objects.size(); i++){
+            cout << objects[i] << endl;
+        }
+    #endif
+    #if D3D
+        DepthSensor ds(scene);
+        ds.findObjects();
+        ds.visualizePointClouds();
+    #endif
     
     State state = wc->getDefaultState();
     Transform3D<> pick(Vector3D<>(0.25, 0.474, 0.191), RPY<>(0,Deg2Rad * 180,0));

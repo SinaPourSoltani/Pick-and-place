@@ -11,14 +11,28 @@ set(RWS_ROOT $ENV{RWS_ROOT})
 set(RobWorkStudio_DIR ${RWS_ROOT}/cmake) 
 set(CMAKE_MODULE_PATH ${RWS_ROOT}/build ${CMAKE_MODULE_PATH})
 
+option (SS "Use Sparse Stereo" OFF)
+option (DS "Use Depth Sensor" OFF)
+
+set(D3D false) 
+set(D2D false)
+
 # OpenCV
-#find_package(OpenCV REQUIRED)
+if(SS)
+	message("* * * * * * * * * * * * * * SPARSE STEREO * * * * * * * * * * * * * *")
+	find_package(OpenCV REQUIRED)
+	set(D2D true)
+endif()
 
 # PCL
-find_package(PCL 1.7 REQUIRED)
-include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
+if(DS)
+	message("* * * * * * * * * * * * * * DEPTH SENSOR * * * * * * * * * * * * * *")
+	find_package(PCL 1.7 REQUIRED)
+	include_directories(${PCL_INCLUDE_DIRS})
+	link_directories(${PCL_LIBRARY_DIRS})
+	add_definitions(${PCL_DEFINITIONS})
+	set(D3D true) 
+endif()
 
 # RobWork
 find_package(RobWork REQUIRED)
@@ -32,15 +46,22 @@ include_directories(${ROBWORKSTUDIO_INCLUDE_DIRS})
 link_directories(${ROBWORKSTUDIO_LIBRARY_DIRS})
 add_definitions(${ROBWORKSTUDIO_DEFINITIONS})
 
-add_executable(${PROJECT_NAME} 
-pickAndPlace.cpp 
-#../Robotics/MotionPlanning/motionplanning.cpp
-#../Vision/DepthSensor/depthSensor.cpp
-#../Vision/SparseStereo/sparseStereo.cpp
-#../Vision/SparseStereo/methods.hpp
-)
-
 add_definitions(-DQT_NO_KEYWORDS)
+add_definitions(-DD2D=${D2D})
+add_definitions(-DD3D=${D3D})
 
-target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} ${OpenCV_LIBS})
+add_executable(${PROJECT_NAME} pickAndPlace.cpp)
+
+if(SS)
+	message("* * * * * * * * * * * * * * SPARSE STEREO * * * * * * * * * * * * * *")
+	target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+endif()
+
+
+if(DS)
+	message("* * * * * * * * * * * * * * DEPTH SENSOR * * * * * * * * * * * * * *")
+	target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES})
+endif()
+
+
 target_link_libraries(${PROJECT_NAME} ${ROBWORK_LIBRARIES} ${ROBWORKSTUDIO_LIBRARIES})

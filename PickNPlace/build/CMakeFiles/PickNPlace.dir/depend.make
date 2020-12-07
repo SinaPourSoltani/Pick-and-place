@@ -4,6 +4,8 @@
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: ../pickAndPlace.cpp
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Robotics/MotionPlanning/motionplanning.cpp
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Vision/DepthSensor/depthSensor.cpp
+CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Vision/SparseStereo/methods.hpp
+CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Vision/SparseStereo/sparseStereo.cpp
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/RobWork/src/RobWorkConfig.hpp
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/RobWork/src/rw/common.hpp
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/RobWork/src/rw/common/Archive.hpp
@@ -344,7 +346,9 @@ CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/Rob
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/RobWork/src/rwlibs/control/Controller.hpp
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/RobWork/src/rwlibs/pathplanners/rrt/RRTPlanner.hpp
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/RobWork/src/rwlibs/proximitystrategies/ProximityStrategyFactory.hpp
+CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/RobWork/src/rwlibs/simulation/FrameGrabber.hpp
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/RobWork/src/rwlibs/simulation/FrameGrabber25D.hpp
+CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/RobWork/src/rwlibs/simulation/GLFrameGrabber.hpp
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/RobWork/src/rwlibs/simulation/GLFrameGrabber25D.hpp
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/RobWork/src/rwlibs/simulation/SimulatedCamera.hpp
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: /Users/sinapoursoltani/RobWork/RobWork/src/rwlibs/simulation/SimulatedSensor.hpp
