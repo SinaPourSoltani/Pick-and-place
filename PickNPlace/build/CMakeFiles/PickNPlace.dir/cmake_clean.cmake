@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
   "CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o"
-  "PickNPlace"
   "PickNPlace.pdb"
+  "PickNPlace"
 )
 
 # Per-language clean rules from dependency scanning.
