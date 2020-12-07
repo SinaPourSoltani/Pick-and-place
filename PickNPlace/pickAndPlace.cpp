@@ -67,7 +67,6 @@ int main(int argc, char** argv){
     Math::seed();
     
     // Predefined place locations
-    
     Transform3D<> placeRed(Vector3D<>(PLACE_CENTER_X,
                                       PLACE_CENTER_Y,
                                       0.191),
@@ -102,6 +101,8 @@ int main(int argc, char** argv){
     #if D3D
         DepthSensor ds(scene);
         ds.findObjects();
+        string folderToModels = "../../Vision/DepthSensor/";
+        ds.loadObjectModels(folderToModels);
         ds.visualizePointClouds();
         // set pick points
     #endif

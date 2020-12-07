@@ -111,7 +111,6 @@ public:
     void visualizePointClouds(){
         PCLVisualizer v("PointCloud");
         v.addPointCloud<PointXYZ>(cloud, "points");
-        vector<string> colors = {"Red","Green","Blue"};
         for(int i = 0; i < objectClouds.size(); i++){
             v.addPointCloud<PointXYZ>(objectClouds[i], PointCloudColorHandlerCustom<PointXYZ>(objectClouds[i],
                                                                                               ((i == 0) ? 255 : 0),
@@ -123,7 +122,43 @@ public:
         //v.addPlane(*coefficients, "detectedPlane");
         //v.addPointCloud<PointXYZ>(randomPoints, PointCloudColorHandlerCustom<PointXYZ>(randomPoints, 255,255, 255),"randompoints");
         v.addPointCloudNormals<PointNormal>(pclNormals,1,0.6,"normals");
+        for(int i = 0; i < objectModels.size(); i++){
+            v.addPointCloud<PointXYZ>(objectModels[i], PointCloudColorHandlerCustom<PointXYZ>(objectModels[i], 255, 255, 255), "objectModel_" + colors[i]);
+        }
         v.spin();
+    }
+    
+    void translatePointCloud(pcl::PointCloud<PointXYZ>::Ptr cloudToTranslate, PointXYZ translateVector){
+        pcl::PointCloud<PointXYZ>::Ptr translatedCloud(new pcl::PointCloud<PointXYZ>);
+        for(auto p : cloudToTranslate->points) {
+            PointXYZ translatedPoint = sub(p, translateVector);
+            translatedCloud->push_back(translatedPoint);
+        }
+        *cloudToTranslate = *translatedCloud;
+    }
+    
+    void moveObjectModels(){
+        vector<PointXYZ> objectCentroids = getCentroidsOfClouds(objectClouds);
+        vector<PointXYZ> modelCentroids = getCentroidsOfClouds(objectModels);
+        
+        for (unsigned int i = 0; i < objectModels.size(); i++) {
+            PointXYZ vectorObjectModel = sub(modelCentroids[i], objectCentroids[i]);
+            translatePointCloud(objectModels[i], vectorObjectModel);
+        }
+    }
+    
+    void loadObjectModels(string folder){
+        vector<string> filepaths;
+        for(auto color : colors) {
+            string fp = folder + "SmallerCylinder" + color + ".pcd";
+            filepaths.push_back(fp);
+        }
+        for(auto fp : filepaths) {
+            pcl::PointCloud<PointXYZ>::Ptr object(new pcl::PointCloud<PointXYZ>);
+            loadPCDFile(fp, *object);
+            objectModels.push_back(object);
+        }
+        moveObjectModels();
     }
     
     ~DepthSensor(){};
@@ -364,16 +399,16 @@ private:
         objectClouds = sortedClouds;
     }
     
-    vector<PointXYZ> getCentroidsOfObjects(){
+    vector<PointXYZ> getCentroidsOfClouds(vector<pcl::PointCloud<PointXYZ>::Ptr> clouds){
         vector<PointXYZ> centroids;
-        for(auto object : objectClouds){
+        for(auto object : clouds){
             centroids.push_back(centroid(object));
         }
         return centroids;
     }
     vector<Transform3D<> > getObjectsAsTransforms(){
         vector<Transform3D<> > transforms = {};
-        vector<PointXYZ> centroids = getCentroidsOfObjects();
+        vector<PointXYZ> centroids = getCentroidsOfClouds(objectClouds);
         Transform3D<> cameraT = cameraFrame->wTf(wc->getDefaultState());
         for (auto c : centroids) {
             Transform3D<> T(Vector3D<>(c.x, c.y, c.z), RPY<>(0, 0, 0));
@@ -417,6 +452,7 @@ private:
     Frame* cameraFrame;
     string workcellFilePath;
     string camera25D = "Scanner25D";
+    vector<string> colors = {"Red","Green","Blue"};
     double fovy; int width, height;
 
     pcl::PointCloud<PointXYZ>::Ptr cloud;
@@ -425,6 +461,7 @@ private:
     pcl::PointCloud<PointNormal>::Ptr pclNormals;
     ModelCoefficients::Ptr coefficients;
     vector<pcl::PointCloud<PointXYZ>::Ptr> objectClouds;
+    vector<pcl::PointCloud<PointXYZ>::Ptr> objectModels;
 };
 
 /*
