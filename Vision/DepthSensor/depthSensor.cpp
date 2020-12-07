@@ -154,17 +154,17 @@ private:
         cout << "Camera properties: fov " << fovy << " width " << width << " height " << height << endl;
     };
     void mallocPointClouds(){
-        cloud = ownedPtr(new PointCloud<PointXYZ>);
-        plane = ownedPtr(new PointCloud<PointXYZ>);
-        randomPoints = ownedPtr(new PointCloud<PointXYZ>);
-        pclNormals = ownedPtr(new PointCloud<PointNormal>);
+        cloud = ownedPtr(new pcl::PointCloud<PointXYZ>);
+        plane = ownedPtr(new pcl::PointCloud<PointXYZ>);
+        randomPoints = ownedPtr(new pcl::PointCloud<PointXYZ>);
+        pclNormals = ownedPtr(new pcl::PointCloud<PointNormal>);
         coefficients = ownedPtr(new ModelCoefficients);
     }
     
     // Point Cloud Specific
     void grabPointCloud(RobWorkStudio* rwstudio){
         // Inspiration from: https://www.robwork.dk/manual/simulated_sensors/
-        PointCloud<PointXYZ>::Ptr pclScene(new PointCloud<PointXYZ>);
+        pcl::PointCloud<PointXYZ>::Ptr pclScene(new pcl::PointCloud<PointXYZ>);
         
         State state = wc->getDefaultState();
         SceneViewer::Ptr gldrawer = rwstudio->getView()->getSceneViewer();
@@ -190,7 +190,7 @@ private:
         cout << "PointCloud before filtering: " << cloud->width * cloud->height
            << " data points (" << pcl::getFieldsList (*cloud) << ")." << std::endl;
 
-        PointCloud<PointXYZ>::Ptr cloud_filtered(new PointCloud<PointXYZ>);
+        pcl::PointCloud<PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<PointXYZ>);
         // Create the filtering object
         VoxelGrid<PointXYZ> sor;
         sor.setInputCloud (cloud);
@@ -227,18 +227,18 @@ private:
         search::KdTree<PointXYZ>::Ptr tree (new search::KdTree<PointXYZ> ());
         ne.setSearchMethod (tree);
         
-        PointCloud<Normal>::Ptr cloud_normals (new PointCloud<Normal>);
+        pcl::PointCloud<Normal>::Ptr cloud_normals (new pcl::PointCloud<Normal>);
         ne.setRadiusSearch (0.03);
         ne.compute (*cloud_normals);
         
-        PointCloud<PointNormal>::Ptr cloud_with_normals (new PointCloud<PointNormal>);
+        pcl::PointCloud<PointNormal>::Ptr cloud_with_normals (new pcl::PointCloud<PointNormal>);
         concatenateFields(*cloud, *cloud_normals, *cloud_with_normals);
         
         *pclNormals = *cloud_with_normals;
     }
     void planeModelSegmentation(){
         // Inspiration from: https://pcl.readthedocs.io/en/latest/planar_segmentation.html
-        PointCloud<PointXYZ>::Ptr planeModel (new PointCloud<PointXYZ>);
+        pcl::PointCloud<PointXYZ>::Ptr planeModel (new pcl::PointCloud<PointXYZ>);
         ModelCoefficients::Ptr coeffs (new ModelCoefficients);
         PointIndices::Ptr inliers (new PointIndices);
         SACSegmentation<PointXYZ> seg;
@@ -276,7 +276,7 @@ private:
         *coefficients = *coeffs;
     }
     void removePoints(bool behind = true){
-        PointCloud<PointXYZ>::Ptr reducedCloud(new PointCloud<PointXYZ>);
+        pcl::PointCloud<PointXYZ>::Ptr reducedCloud(new pcl::PointCloud<PointXYZ>);
         double a = coefficients->values[0];
         double b = coefficients->values[1];
         double c = coefficients->values[2];
@@ -314,9 +314,9 @@ private:
         ec.setInputCloud (cloud);
         ec.extract (cluster_indices);
         
-        vector<PointCloud<PointXYZ>::Ptr> objClouds = {};
+        vector<pcl::PointCloud<PointXYZ>::Ptr> objClouds = {};
         for(int i = 0; i < cluster_indices.size(); i++){
-            PointCloud<PointXYZ>::Ptr object(new PointCloud<PointXYZ>);
+            pcl::PointCloud<PointXYZ>::Ptr object(new pcl::PointCloud<PointXYZ>);
             for(int j = 0; j < cluster_indices[i].indices.size(); j++){
                 object->push_back(cloud->points[cluster_indices[i].indices[j]]);
             }
@@ -358,7 +358,7 @@ private:
             }
         }
         
-        vector<PointCloud<PointXYZ>::Ptr> sortedClouds = {};
+        vector<pcl::PointCloud<PointXYZ>::Ptr> sortedClouds = {};
         // put clouds into new sorted vector
         for (int i = 0; i < N; i++) {
             sortedClouds.push_back(objectClouds[objectIdx[i]]);
@@ -394,7 +394,7 @@ private:
         return PointXYZ(a.x / d, a.y / d, a.z / d);
     }
     
-    PointXYZ centroid(PointCloud<PointXYZ>::Ptr cloud){
+    PointXYZ centroid(pcl::PointCloud<PointXYZ>::Ptr cloud){
         PointXYZ centroid(0,0,0);
         int num_points = cloud->size();
         for(int i = 0; i < num_points; i++){
@@ -411,36 +411,13 @@ private:
     string camera25D = "Scanner25D";
     double fovy; int width, height;
 
-    PointCloud<PointXYZ>::Ptr cloud;
-    PointCloud<PointXYZ>::Ptr plane;
-    PointCloud<PointXYZ>::Ptr randomPoints;
-    PointCloud<PointNormal>::Ptr pclNormals;
+    pcl::PointCloud<PointXYZ>::Ptr cloud;
+    pcl::PointCloud<PointXYZ>::Ptr plane;
+    pcl::PointCloud<PointXYZ>::Ptr randomPoints;
+    pcl::PointCloud<PointNormal>::Ptr pclNormals;
     ModelCoefficients::Ptr coefficients;
-    vector<PointCloud<PointXYZ>::Ptr> objectClouds;
+    vector<pcl::PointCloud<PointXYZ>::Ptr> objectClouds;
 };
-
-int main(int argc, char**argv) {
-    if(argc < 2){
-        cout << "Usage: " << argv[0] << " <scene>" << endl;
-        return 0;
-    }
-    string WC_FILE = argv[1];
-    /*
-    // Load
-    PointCloud<PointXYZ>::Ptr object(new PointCloud<PointXYZ>);
-    loadPCDFile(argv[1], *object);
-    
-    // Show
-    PCLVisualizer v("Before local alignment");
-    v.addPointCloud<PointXYZ>(object, PointCloudColorHandlerCustom<PointXYZ>(object, 0, 255, 0), "object");
-    v.spin();
-    */
-    DepthSensor ds(WC_FILE);
-    ds.findObjects();
-    ds.visualizePointClouds();
-     
-    return 0;
-}
 
 /*
  Ressources:
