@@ -27,8 +27,7 @@ using rw::sensor::Image;
 #define CYLR_HEIGHT 0.16
 #define CYLG_HEIGHT 0.08
 #define CYLB_HEIGHT 0.12
-
-
+#define CYL_OFFSET 0.0001
 
 int main(int argc, char** argv){
     if(argc < 2) {
@@ -68,23 +67,28 @@ int main(int argc, char** argv){
     Math::seed();
     
     // Predefined place locations
+    
     Transform3D<> placeRed(Vector3D<>(PLACE_CENTER_X,
                                       PLACE_CENTER_Y,
                                       0.191),
                            RPY<>(0,Deg2Rad * 180,0));
     Transform3D<> placeGreen(Vector3D<>(PLACE_CENTER_X,
                                         PLACE_CENTER_Y,
-                                        placeRed.P()(2) + CYLR_HEIGHT / 2 + CYLG_HEIGHT / 2),
+                                        placeRed.P()(2) + CYLR_HEIGHT / 2 + CYLG_HEIGHT / 2 + CYL_OFFSET),
                              RPY<>(0,Deg2Rad * 180,0));
     Transform3D<> placeBlue(Vector3D<>(PLACE_CENTER_X,
                                        PLACE_CENTER_Y,
-                                       placeGreen.P()(2) + CYLG_HEIGHT / 2 + CYLB_HEIGHT / 2),
+                                       placeGreen.P()(2) + CYLG_HEIGHT / 2 + CYLB_HEIGHT / 2 + CYL_OFFSET),
                             RPY<>(0,Deg2Rad * 180,0));
+    vector<Transform3D<> > places = {placeRed, placeGreen, placeBlue};
     
     // Vision determined pick locations
-    Transform3D<> pickRed(Vector3D<>(0.25, 0.474, 0.191), RPY<>(0,Deg2Rad * 180,0));
-    Transform3D<> pickGreen(Vector3D<>(0, 0.474, 0.150), RPY<>(0,Deg2Rad * 180,0));
-    Transform3D<> pickBlue(Vector3D<>(-0.25, 0.474, 0.170), RPY<>(0,Deg2Rad * 180,0));;
+    vector<string> objectNames = {"CylinderRed", "CylinderGreen", "CylinderBlue"};
+    vector<Transform3D<> > picks = {
+        Transform3D<>(Vector3D<>(0.25, 0.474, 0.191), RPY<>(0,Deg2Rad * 180,0)),
+        Transform3D<>(Vector3D<>(0, 0.474, 0.150), RPY<>(0,Deg2Rad * 180,0)),
+        Transform3D<>(Vector3D<>(-0.25, 0.474, 0.170), RPY<>(0,Deg2Rad * 180,0)),
+    };
     
     #if D2D
         SparseStereo ss(scene);
@@ -103,21 +107,32 @@ int main(int argc, char** argv){
     #endif
     
     State state = wc->getDefaultState();
-    MotionPlanner mp(wc, robot, pickRed, placeRed, state);
+    MotionPlanner mp(wc, robot, state);
     vector<float> timeBetweenPoints = {1, 1, 1, 1, 1, 1, 1, 1};
     vector<float> blendFractions = {0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 0.0, 0.5};
-    /*
+    
     if(mpm == RRT){
-        mp.RRTInterpolate();
-    } else if(mpm = P2PB) {
-        mp.setPickLocation(pickRed);
-        mp.setPlaceLocation(placeRed);
-        mp.linearlyInterpolate(timeBetweenPoints, blendFractions)
-        mp.writeTrajectoryToFile(traj, trajectoryFilePath);
+        for(unsigned int i = 0; i < picks.size(); i++){
+            mp.setPickAndPlace(picks[i], objectNames[i], places[i]);
+            vector<QPath> qpaths = mp.RRTInterpolate(0.05);
+            mp.writeQPathVectorToFile(qpaths, qpathFilePath);
+        }
+        
+    } else if(mpm == P2PB) {
+        for(unsigned int i = 0; i < picks.size(); i++){
+            mp.setPickAndPlace(picks[i], objectNames[i], places[i]);
+            InterpolatorTrajectory<Transform3D<> > traj = mp.linearlyInterpolate(timeBetweenPoints, blendFractions);
+            QPath path = mp.trajectoryToQPath(traj);
+            mp.writeTrajectoryToFile(traj, trajectoryFilePath);
+            mp.writeQPathToFile(path, qpathFilePath);
+        }
     } else {
-        mp.setPickLocation(pickRed);
-        mp.setPlaceLocation(placeRed);
-        mp.linearlyInterpolate(timeBetweenPoints)
-        mp.writeTrajectoryToFile(traj, trajectoryFilePath);
-    }*/
+        for(unsigned int i = 0; i < picks.size(); i++){
+            mp.setPickAndPlace(picks[i], objectNames[i], places[i]);
+            InterpolatorTrajectory<Transform3D<> > traj = mp.linearlyInterpolate(timeBetweenPoints);
+            QPath path = mp.trajectoryToQPath(traj);
+            mp.writeTrajectoryToFile(traj, trajectoryFilePath);
+            mp.writeQPathToFile(path, qpathFilePath);
+        }
+    }
 }
