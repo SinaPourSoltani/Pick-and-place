@@ -137,7 +137,7 @@ class SparseStereo{
     */
     array<Mat,NUM_OBJECTS> findCenter(string imagePath, bool showImage = false){
       array<Mat,3> points;
-      Mat src = imread(imagePath, CV_LOAD_IMAGE_COLOR);
+      Mat src = imread(imagePath, IMREAD_COLOR);
       Mat img = src.clone();
       cvtColor(src, img, COLOR_RGBA2GRAY, 0);
       threshold(img, img, 177, 255, THRESH_BINARY_INV);
@@ -233,8 +233,8 @@ class SparseStereo{
       leftSimcam->acquire();
 
 
-      static const double DT = 0.001;
-      const Simulator::UpdateInfo leftInfo(DT);
+      static const double dt = 0.001;
+      const Simulator::UpdateInfo leftInfo(dt);
       state = wc->getDefaultState();
       int cnt = 0;
       const Image* img;
@@ -264,7 +264,7 @@ class SparseStereo{
       rightSimcam->start();
       rightSimcam->acquire();
 
-      const Simulator::UpdateInfo rightInfo(DT);
+      const Simulator::UpdateInfo rightInfo(dt);
       cnt = 0;
       while(!rightSimcam->isImageReady()){
         cout << "Image is not ready yet. Iteration " << cnt << endl;
@@ -291,11 +291,11 @@ class SparseStereo{
     //This function is temp until feature detection is applied.
     array<Mat,2> openImages(){
       array<Mat,2> points;
-      Mat leftImg = imread(pathLeftImageNoise, CV_LOAD_IMAGE_COLOR);
+      Mat leftImg = imread(pathLeftImageNoise, IMREAD_COLOR);
       points[0] = getMouseClick("Left image.", leftImg);
       //cout << "Left point: \n" << points[0] << endl;
 
-      Mat rightImg = imread(pathRightImageNoise, CV_LOAD_IMAGE_COLOR);
+      Mat rightImg = imread(pathRightImageNoise, IMREAD_COLOR);
       points[1] = getMouseClick("Right image.", rightImg);
       //cout << "Right point: \n" << points[1] << endl;
 
@@ -379,29 +379,3 @@ class SparseStereo{
 
     //virtual ~SparseStereo();
 };
-
-
-
-int main(int argc, char** argv) {
-
-  //How to call the script
-  if(argc < 4){
-    cout << "Usage: " << argv[0] << " <scene> <left camera> <right camera>" << endl;
-    return 0;
-  }
-
-  SparseStereo sparseStereo(argv);
-  sparseStereo.takeImages();
-  sparseStereo.addNoiseToImages(0,0.1);
-  vector<Mat> points3D = sparseStereo.stereopsis();
-  cout << "-----------------------------------" << endl;
-  cout << "The 3D points: " << endl << endl;
-  for(int i = 0; i < points3D.size(); i++){
-    cout << points3D[i] << endl << endl;
-  }
-  cout << "-----------------------------------" << endl;
-
-
-
-  return 0;
-}
