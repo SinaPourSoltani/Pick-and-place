@@ -39,10 +39,10 @@
 		<Frame name="PlaceObstacle" refframe="Table" type="Fixed">
         <RPY>0 0 0</RPY> <Pos>0.3 -0.374 0.251</Pos>
         <Drawable name="PlaceObstacleGeo" refframe="PlaceObstacle" colmodel="Enabled">
-            <Pos>0 0 0</Pos>
+            <Pos>0 0 -0.05</Pos>
             <RPY>0 0 0</RPY>
             <RGB>0.1 0.1 0.1</RGB>
-            <Box x="0.30" y="0.01" z="0.30"/>
+            <Box x="0.30" y="0.01" z="0.20"/>
         </Drawable>
 				<Drawable name="PlaceObstacleGeo2" refframe="PlaceObstacle" colmodel="Enabled">
             <Pos>-0.15 -0.15 0.05</Pos>
