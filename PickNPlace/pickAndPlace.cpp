@@ -20,31 +20,71 @@ using rw::loaders::WorkCellLoader;
 using rw::models::WorkCell;
 using rw::sensor::Image;
 
+#define P2P "P2P"
+#define P2PB "P2PB"
+#define RRT "RRT"
+
+#define CYLR_HEIGHT 0.16
+#define CYLG_HEIGHT 0.08
+#define CYLB_HEIGHT 0.12
+
+
+
 int main(int argc, char** argv){
     if(argc < 2) {
-        cout << "Usage: " << argv[0] << " <scene>" << endl;
+        cout << "Usage: " << argv[0] << " <scene> [motion planning method]" << endl;
         return 0;
     }
-
+    
     string scene = string(argv[1]);
+    string mpm = P2P;
+    
+    if(argc > 2){
+        string input = string(argv[2]);
+        if(input == P2P || input == P2PB || input == RRT){
+            mpm = input;
+        } else {
+            throw("Undefined Motion Planning Methods [default: P2P] :\n Choose between:\n - P2P\n - P2PB\n - RRT\n");
+        }
+    }
+    
     string trajectoryFilePath = "traj.dat";
     string qpathFilePath = "qconfig.rwplay";
-
+    
     // load workcell
     WorkCell::Ptr wc = rw::loaders::WorkCellLoader::Factory::load(scene);
     if(wc == NULL) {
         RW_THROW("COULD NOT LOAD scene... check path!");
         return -1;
     }
-
+    
     // find serial device
     SerialDevice::Ptr robot = wc->findDevice<SerialDevice>("UR-6-85-5-A");
     if(robot==NULL) {
         RW_THROW("COULD not find device robot... check model");
         return -1;
     }
-
+    
     Math::seed();
+    
+    // Predefined place locations
+    Transform3D<> placeRed(Vector3D<>(PLACE_CENTER_X,
+                                      PLACE_CENTER_Y,
+                                      0.191),
+                           RPY<>(0,Deg2Rad * 180,0));
+    Transform3D<> placeGreen(Vector3D<>(PLACE_CENTER_X,
+                                        PLACE_CENTER_Y,
+                                        placeRed.P()(2) + CYLR_HEIGHT / 2 + CYLG_HEIGHT / 2),
+                             RPY<>(0,Deg2Rad * 180,0));
+    Transform3D<> placeBlue(Vector3D<>(PLACE_CENTER_X,
+                                       PLACE_CENTER_Y,
+                                       placeGreen.P()(2) + CYLG_HEIGHT / 2 + CYLB_HEIGHT / 2),
+                            RPY<>(0,Deg2Rad * 180,0));
+    
+    // Vision determined pick locations
+    Transform3D<> pickRed(Vector3D<>(0.25, 0.474, 0.191), RPY<>(0,Deg2Rad * 180,0));
+    Transform3D<> pickGreen(Vector3D<>(0, 0.474, 0.150), RPY<>(0,Deg2Rad * 180,0));
+    Transform3D<> pickBlue(Vector3D<>(-0.25, 0.474, 0.170), RPY<>(0,Deg2Rad * 180,0));;
     
     #if D2D
         SparseStereo ss(scene);
@@ -53,18 +93,31 @@ int main(int argc, char** argv){
         for(unsigned int i = 0; i < objects.size(); i++){
             cout << objects[i] << endl;
         }
+        // set pick points
     #endif
     #if D3D
         DepthSensor ds(scene);
         ds.findObjects();
         ds.visualizePointClouds();
+        // set pick points
     #endif
     
     State state = wc->getDefaultState();
-    Transform3D<> pick(Vector3D<>(0.25, 0.474, 0.191), RPY<>(0,Deg2Rad * 180,0));
-    Transform3D<> place(Vector3D<>(PLACE_CENTER_X, PLACE_CENTER_Y, 0.191), RPY<>(0,Deg2Rad * 180,0));
-    
-    MotionPlanner mp(wc, robot, pick, place, state);
-    InterpolatorTrajectory<Transform3D<> > traj = mp.linearlyInterpolate();
-    mp.writeTrajectoryToFile(traj, trajectoryFilePath);
+    MotionPlanner mp(wc, robot, pickRed, placeRed, state);
+    vector<float> timeBetweenPoints = {1, 1, 1, 1, 1, 1, 1, 1};
+    vector<float> blendFractions = {0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 0.0, 0.5};
+    /*
+    if(mpm == RRT){
+        mp.RRTInterpolate();
+    } else if(mpm = P2PB) {
+        mp.setPickLocation(pickRed);
+        mp.setPlaceLocation(placeRed);
+        mp.linearlyInterpolate(timeBetweenPoints, blendFractions)
+        mp.writeTrajectoryToFile(traj, trajectoryFilePath);
+    } else {
+        mp.setPickLocation(pickRed);
+        mp.setPlaceLocation(placeRed);
+        mp.linearlyInterpolate(timeBetweenPoints)
+        mp.writeTrajectoryToFile(traj, trajectoryFilePath);
+    }*/
 }

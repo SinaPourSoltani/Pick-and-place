@@ -103,12 +103,10 @@ public:
         cluster();
         sortClusters(0, false);
         
-        // Print object centroids
-        vector<PointXYZ> centroids = getCentroidsOfObjects();
-        for (auto c : centroids) {
-            cout << c << endl;
+        vector<Transform3D<> > objectTransforms = getObjectsAsTransforms();
+        for(auto t : objectTransforms){
+            cout << t << endl;
         }
-        
     }
     void visualizePointClouds(){
         PCLVisualizer v("PointCloud");
@@ -372,6 +370,16 @@ private:
             centroids.push_back(centroid(object));
         }
         return centroids;
+    }
+    vector<Transform3D<> > getObjectsAsTransforms(){
+        vector<Transform3D<> > transforms = {};
+        vector<PointXYZ> centroids = getCentroidsOfObjects();
+        Transform3D<> cameraT = cameraFrame->wTf(wc->getDefaultState());
+        for (auto c : centroids) {
+            Transform3D<> T(Vector3D<>(c.x, c.y, c.z), RPY<>(0, 0, 0));
+            transforms.push_back(cameraT * T);
+        }
+        return transforms;
     }
     
     // Mathematical Helpers
