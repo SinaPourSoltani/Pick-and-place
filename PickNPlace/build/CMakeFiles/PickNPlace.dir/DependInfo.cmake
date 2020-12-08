@@ -10,7 +10,7 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # Preprocessor definitions for this target.
 set(CMAKE_TARGET_DEFINITIONS_CXX
-  "D2D=false"
+  "D2D=true"
   "D3D=false"
   "QT_CORE_LIB"
   "QT_DEBUG"
@@ -33,6 +33,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/usr/include/python3.6m"
   "/usr/share/robworkstudio-1.2/cmake/../../../include/robworkstudio-1.2"
   "/usr/share/robworkstudio-1.2/cmake/../../../share/robworkstudio-1.2/ext/qtpropertybrowser/src"
+  "/usr/include/opencv"
   "/usr/include/x86_64-linux-gnu/qt5"
   "/usr/include/x86_64-linux-gnu/qt5/QtCore"
   "/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++"

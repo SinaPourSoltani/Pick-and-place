@@ -62,7 +62,7 @@ private:
     Frame* rightCamera;
     PropertyMap leftCameraProperties;
     PropertyMap rightCameraProperties;
-    
+
     string scene, leftCam, rightCam;
     string rightImageStr = "right_image.png";
     string leftImageStr = "left_image.png";
@@ -72,17 +72,17 @@ private:
     string rightImageNoiseStr = "right_image_noise.png";
     string pathLeftImageNoise = leftImageNoiseStr;
     string pathRightImageNoise = rightImageNoiseStr;
-    
+
     double leftFovy, rightFovy;
     int leftWidth, leftHeight, rightWidth, rightHeight;
-    
+
     State state;
-    
+
     Eigen::Matrix<double, 3, 4> leftProjectionMatrix;
     Eigen::Matrix<double, 3, 4> rightProjectionMatrix;
-    
-    
-    
+
+
+
     //This funciton is inspired from Sina's work
     void addNoiseToImage(string image_, string output, int mean = 0, double variance = 0.1){
         cout << "\nAdding noise to " << image_ << endl;
@@ -94,35 +94,35 @@ private:
         addWeighted(img, 1.0, noise, 1.0, 0.0, img);
         imwrite(output, img);
     }
-    
+
     //This function is inspired from the SamplePlugin given for the project
     Eigen::Matrix<double, 3, 4> calculateProjectionMatrix(Frame* cam_, double fovy_, double width_, double height_){
-        
+
         double fovyPixel = height_ / 2 / tan(fovy_ * (2*M_PI) / 360.0 / 2.0);
         //cout << "Fovy: " << fovy_ << endl;
         //cout << "Fovy pixel: " << fovyPixel << endl;
-        
+
         Eigen::Matrix<double, 3, 4> KA;
         KA << fovyPixel, 0, width_ / 2.0, 0,
         0, fovyPixel, height_ / 2.0, 0,
         0, 0, 1, 0;
-        
+
         //cout << "Intrinsic parameters (KA): " << endl;
         //cout << KA << endl;
-        
+
         Transform3D<> camPosOriToWorld = cam_->wTf(state);
         Transform3D<> H = inverse(camPosOriToWorld * inverse(Transform3D<>(RPY<>(-M_PI, 0, M_PI).toRotation3D())));
-        
+
         //cout << "Extrinsic parameters (H): " << endl;
         //cout << H.e() << endl;
-        
+
         //H skal muligvis inverse.
         Eigen::Matrix<double, 3, 4> projectionMatrix = KA * H.e();
         //cout << "Projection matrix: " << endl;
         //cout << projectionMatrix << endl;
         return projectionMatrix;
     }
-    
+
     //This function is inspired from the SamplePlugin given for the project
     void saveAsOpenCVImage(Mat image, string path){
         Mat imflip, imflip_mat;
@@ -130,7 +130,7 @@ private:
         cvtColor(imflip, imflip_mat, COLOR_RGB2BGR);
         imwrite(path, imflip_mat);
     }
-    
+
     /*Finds the centers of the cylinders. Does this by finding contours
      * in the image. Sorting the contours by area and taking the three smallest
      * which is the cylinders. Then it sorts the three center points, from the
@@ -144,9 +144,9 @@ private:
         threshold(img, img, 177, 255, THRESH_BINARY_INV);
         vector<vector<Point>> contours;
         findContours(img, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-        
+
         vector<pair<Point,double>> coordsArea;
-        for(int i = 0; i < contours.size(); i++){
+        for(unsigned int i = 0; i < contours.size(); i++){
             Moments m = moments(contours[i], false);
             double area = contourArea(contours[i]);
             if(area <= 0){ //If area is zero we don't consider the contour.
@@ -171,7 +171,7 @@ private:
             point.at<double>(2,0) = 1.0;
             points[i] = point;
         }
-        
+
         if(showImage){
             circle(src, pointsVec[0], 2, Scalar(0, 255, 255), -1);
             circle(src, pointsVec[1], 2, Scalar(0, 255, 255), -1);
@@ -181,7 +181,7 @@ private:
         }
         return points;
     }
-    
+
 public:
     SparseStereo(){};
     SparseStereo(string sceneFilePath){
@@ -189,9 +189,9 @@ public:
         leftCam = "Camera_Left";
         rightCam = "Camera_Right";
         loadWorkcellAndCameras();
-        
+
         RobWorkStudioApp app("");
-        
+
         thread t([&](){
             while (!app.isRunning()) {
                 TimerUtil::sleepMs(1000);
@@ -200,31 +200,31 @@ public:
             RobWorkStudio* rwstudio = app.getRobWorkStudio();
             rwstudio->postOpenWorkCell(scene);
             TimerUtil::sleepMs(2000);
-            
+
             takeImages(rwstudio);
-            
+
             app.close();
         });
         t.detach();
         app.run();
     }
-    
+
     void loadWorkcellAndCameras(){
         wc = WorkCellLoader::Factory::load(scene);
         if(wc.isNull()){RW_THROW("WorkCell could not be loaded.");}
-        
+
         leftCamera = wc->findFrame(leftCam);
         if(leftCamera == nullptr){RW_THROW("Left camera frame could not be found.");}
-        
+
         rightCamera = wc->findFrame(rightCam);
         if(rightCamera == nullptr){RW_THROW("Right camera frame could not be found.");}
-        
+
         leftCameraProperties = leftCamera->getPropertyMap();
         if (!leftCameraProperties.has("Camera")){RW_THROW("Left camera frame does not have Camera property.");}
-        
+
         rightCameraProperties = rightCamera->getPropertyMap();
         if (!rightCameraProperties.has("Camera")){RW_THROW("Right camera frame does not have Camera property.");}
-        
+
         //Printing the properties of the camera
         const string leftCameraParameters = leftCameraProperties.get<string>("Camera");
         istringstream iss (leftCameraParameters, istringstream::in);
@@ -234,10 +234,10 @@ public:
         iss = istringstream(rightCameraParameters, istringstream::in);
         iss >> rightFovy >> rightWidth >> rightHeight;
         //cout << "Right camera properties: fov " << rightFovy << " width " << rightWidth << " height " << rightHeight << endl;
-        
+
         state = wc->getDefaultState();
     }
-    
+
     void takeImages(RobWorkStudio* rwstudio){
         //Setting up for leftCamera
         const SceneViewer::Ptr leftGldrawer = rwstudio->getView()->getSceneViewer();
@@ -248,8 +248,8 @@ public:
         leftSimcam->initialize();
         leftSimcam->start();
         leftSimcam->acquire();
-        
-        
+
+
         static const double dt = 0.001;
         const Simulator::UpdateInfo leftInfo(dt);
         state = wc->getDefaultState();
@@ -265,12 +265,12 @@ public:
         //These two lines are taken from the SamplePlugin
         Mat leftImage = Mat(img->getHeight(), img->getWidth(), CV_8UC3, (Image*)img->getImageData());
         saveAsOpenCVImage(leftImage, pathLeftImage);
-        
-        
+
+
         cout << "Took " << cnt << " steps" << endl;
         cout << "Left image: " << img->getWidth() << "x" << img->getHeight() << endl;
         leftSimcam->stop();
-        
+
         //Setting up for rightCamera
         const SceneViewer::Ptr rightGldrawer = rwstudio->getView()->getSceneViewer();
         const GLFrameGrabber::Ptr rightFramegrabber = ownedPtr(new GLFrameGrabber(rightWidth,rightHeight,rightFovy));
@@ -280,7 +280,7 @@ public:
         rightSimcam->initialize();
         rightSimcam->start();
         rightSimcam->acquire();
-        
+
         const Simulator::UpdateInfo rightInfo(dt);
         cnt = 0;
         while(!rightSimcam->isImageReady()){
@@ -297,45 +297,45 @@ public:
         cout << "Right image: " << img->getWidth() << "x" << img->getHeight() << endl;
         rightSimcam->stop();
     }
-    
+
     void addNoiseToImages(int mean = 0, double variance = 0.1){
         addNoiseToImage(pathLeftImage, pathLeftImageNoise, mean, variance);
         addNoiseToImage(pathRightImage, pathRightImageNoise, mean, variance);
     }
-    
+
     //This function is temp until feature detection is applied.
     array<Mat,2> openImages(){
         array<Mat,2> points;
         Mat leftImg = imread(pathLeftImageNoise, IMREAD_COLOR);
         points[0] = getMouseClick("Left image.", leftImg);
         //cout << "Left point: \n" << points[0] << endl;
-        
+
         Mat rightImg = imread(pathRightImageNoise, IMREAD_COLOR);
         points[1] = getMouseClick("Right image.", rightImg);
         //cout << "Right point: \n" << points[1] << endl;
-        
+
         return points;
     }
-    
+
     vector<Mat> stereopsis(){
         leftProjectionMatrix = calculateProjectionMatrix(leftCamera, leftFovy, leftWidth, leftHeight);
         rightProjectionMatrix = calculateProjectionMatrix(rightCamera, rightFovy, rightWidth, rightHeight);
-        
+
         Mat leftProjectionMat = convertMatrixToMat(leftProjectionMatrix);
         Mat rightProjectionMat = convertMatrixToMat(rightProjectionMatrix);
-        
+
         auto leftPp = splitProjectionMatrix(leftProjectionMat);
         auto rightPp = splitProjectionMatrix(rightProjectionMat);
-        
+
         auto leftOC = computeOpticalCenter(leftPp);
         auto rightOC = computeOpticalCenter(rightPp);
-        
+
         auto leftEpipole = computeEpipole(leftProjectionMat, rightOC);
         auto rightEpipole = computeEpipole(rightProjectionMat, leftOC);
-        
+
         //Fundamental matrix left to right
         auto fundMatLeftToRight = computeFundamentalMatrix(rightEpipole, rightProjectionMat, leftProjectionMat);
-        
+
         //This will be replaced with feature detection
         //auto points = openImages();
         auto correspondingPoints = findCenters();
@@ -345,18 +345,18 @@ public:
             points[0] = correspondingPoints[i].first;
             points[1] = correspondingPoints[i].second;
             //cout << "Point no: " << i+1 << endl;
-            
-            
+
+
             auto leftMInf = projectToInf(leftPp[0], points[0]);
             auto rightMInf = projectToInf(rightPp[0], points[1]);
-            
+
             auto leftPluckerLine = computePluckerLine(leftOC(Range(0,3), Range(0,1)), leftMInf);
             auto rightPluckerLine = computePluckerLine(rightOC(Range(0,3), Range(0,1)), rightMInf);
-            
+
             auto intersection = computePluckerIntersection(leftPluckerLine, rightPluckerLine);
             //cout << "Intersection: " << endl << intersection << endl;
             points3D.push_back(intersection);
-            
+
             // Compare with OpenCV triangulation
             //The below code has been inspired from exercise from lecture 2 in Computer Vision.
             /*
@@ -376,9 +376,9 @@ public:
         }
         return points3D;
     }
-    
+
     //Finds the centers of the cylinders.
-    
+
     array<pair<Mat, Mat>,3> findCenters(){
         auto leftPoints = findCenter(pathLeftImageNoise, SHOWIMAGES);
         auto rightPoints = findCenter(pathRightImageNoise, SHOWIMAGES);
@@ -391,6 +391,6 @@ public:
         }
         return correspondingPoints;
     }
-    
+
     ~SparseStereo(){};
 };

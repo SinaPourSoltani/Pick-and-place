@@ -105,7 +105,7 @@ CMAKE_LINKER:FILEPATH=/usr/bin/ld
 //Path to a program.
 CMAKE_MAKE_PROGRAM:FILEPATH=/usr/bin/make
 
-CMAKE_MODULE_LINKER_FLAGS:STRING='                                                                                                                                                                '
+CMAKE_MODULE_LINKER_FLAGS:STRING='                                                                                                                                                                  '
 
 //Flags used by the linker during debug builds.
 CMAKE_MODULE_LINKER_FLAGS_DEBUG:STRING=
@@ -134,7 +134,7 @@ CMAKE_PROJECT_NAME:STATIC=PickNPlace
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
 
-CMAKE_SHARED_LINKER_FLAGS:STRING='                                                                                                                                                                '
+CMAKE_SHARED_LINKER_FLAGS:STRING='                                                                                                                                                                  '
 
 //Flags used by the linker during debug builds.
 CMAKE_SHARED_LINKER_FLAGS_DEBUG:STRING=
@@ -218,6 +218,9 @@ OPENGL_opengl_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libOpenGL.so
 //Path to a file.
 OPENGL_xmesa_INCLUDE_DIR:PATH=OPENGL_xmesa_INCLUDE_DIR-NOTFOUND
 
+//The directory containing a CMake configuration file for OpenCV.
+OpenCV_DIR:PATH=/usr/share/OpenCV
+
 //Path to a program.
 PYTHON_EXECUTABLE:FILEPATH=/usr/bin/python3
 
@@ -289,7 +292,7 @@ RobWorkStudio_DIR:PATH=/usr/share/robworkstudio-1.2/cmake
 RobWork_DIR:PATH=/usr/share/robwork-1.2/cmake
 
 //Use Sparse Stereo
-SS:BOOL=OFF
+SS:BOOL=ON
 
 //Path to a library.
 tmp:FILEPATH=tmp-NOTFOUND
@@ -434,6 +437,8 @@ CMAKE_STRIP-ADVANCED:INTERNAL=1
 CMAKE_UNAME:INTERNAL=/bin/uname
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+//Details about finding OpenCV
+FIND_PACKAGE_MESSAGE_DETAILS_OpenCV:INTERNAL=[/usr][v3.2.0()]
 //Details about finding OpenGL
 FIND_PACKAGE_MESSAGE_DETAILS_OpenGL:INTERNAL=[/usr/lib/x86_64-linux-gnu/libOpenGL.so][/usr/lib/x86_64-linux-gnu/libGLX.so][/usr/include][c ][v()]
 //Details about finding PythonInterp
