@@ -67,7 +67,6 @@ int main(int argc, char** argv){
     Math::seed();
 
     // Predefined place locations
-
     Transform3D<> placeRed(Vector3D<>(PLACE_CENTER_X,
                                       PLACE_CENTER_Y,
                                       0.191),
@@ -100,8 +99,12 @@ int main(int argc, char** argv){
         // set pick points
     #endif
     #if D3D
+        string folderToModels = "../../Vision/DepthSensor/";
         DepthSensor ds(scene);
-        ds.findObjects();
+        vector<Transform3D<> > objectTransforms = ds.findObjects(folderToModels);
+        for(auto t : objectTransforms){
+            cout << t << endl;
+        }
         ds.visualizePointClouds();
         // set pick points
     #endif

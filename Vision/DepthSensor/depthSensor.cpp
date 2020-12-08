@@ -23,6 +23,7 @@
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/common/random.h>
 #include <pcl/common/time.h>
+#include <pcl/common/transforms.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/spin_image.h>
 #include <pcl/filters/voxel_grid.h>
@@ -84,11 +85,11 @@ public:
         app.run();
     };
     
-    void findObjects(){
+    vector<Transform3D<> > findObjects(string pathToModelsFolder = ""){
         //addNoise(0.001); // 0.001 -> 0.02 | 1 mm to 2 cm
+        //visualizePointClouds();
         //voxelGrid();
         //calculateSurfaceNormals();
-        
         
         // Find biggest planar surface (Tabletop)
         // And remove points beneath
@@ -103,15 +104,19 @@ public:
         cluster();
         sortClusters(0, false);
         
-        vector<Transform3D<> > objectTransforms = getObjectsAsTransforms();
-        for(auto t : objectTransforms){
-            cout << t << endl;
+        if(pathToModelsFolder != ""){
+            loadObjectModels(pathToModelsFolder);
+            moveObjectModels();
+            for (unsigned int i = 0; i < objectClouds.size(); i++) {
+                ICP(objectClouds[i], objectModels[i], 500);
+            }
         }
+        
+        return getObjectsAsTransforms();
     }
     void visualizePointClouds(){
         PCLVisualizer v("PointCloud");
         v.addPointCloud<PointXYZ>(cloud, "points");
-        vector<string> colors = {"Red","Green","Blue"};
         for(int i = 0; i < objectClouds.size(); i++){
             v.addPointCloud<PointXYZ>(objectClouds[i], PointCloudColorHandlerCustom<PointXYZ>(objectClouds[i],
                                                                                               ((i == 0) ? 255 : 0),
@@ -123,6 +128,9 @@ public:
         //v.addPlane(*coefficients, "detectedPlane");
         //v.addPointCloud<PointXYZ>(randomPoints, PointCloudColorHandlerCustom<PointXYZ>(randomPoints, 255,255, 255),"randompoints");
         v.addPointCloudNormals<PointNormal>(pclNormals,1,0.6,"normals");
+        for(int i = 0; i < objectModels.size(); i++){
+            v.addPointCloud<PointXYZ>(objectModels[i], PointCloudColorHandlerCustom<PointXYZ>(objectModels[i], 255, 255, 255), "objectModel_" + colors[i]);
+        }
         v.spin();
     }
     
@@ -210,8 +218,8 @@ private:
             double noisey = distribution(gen);
             double noisez = distribution(gen);
             
-            cloud->points[i].x += noisex;
-            cloud->points[i].y += noisey;
+            //cloud->points[i].x += noisex;
+            //cloud->points[i].y += noisey;
             cloud->points[i].z += noisez;
         }
     }
@@ -364,22 +372,136 @@ private:
         objectClouds = sortedClouds;
     }
     
-    vector<PointXYZ> getCentroidsOfObjects(){
+    vector<PointXYZ> getCentroidsOfClouds(vector<pcl::PointCloud<PointXYZ>::Ptr> clouds){
         vector<PointXYZ> centroids;
-        for(auto object : objectClouds){
+        for(auto object : clouds){
             centroids.push_back(centroid(object));
         }
         return centroids;
     }
     vector<Transform3D<> > getObjectsAsTransforms(){
         vector<Transform3D<> > transforms = {};
-        vector<PointXYZ> centroids = getCentroidsOfObjects();
+        vector<PointXYZ> centroids = getCentroidsOfClouds((objectModels.empty() ? objectClouds : objectModels));
         Transform3D<> cameraT = cameraFrame->wTf(wc->getDefaultState());
         for (auto c : centroids) {
             Transform3D<> T(Vector3D<>(c.x, c.y, c.z), RPY<>(0, 0, 0));
             transforms.push_back(cameraT * T);
         }
         return transforms;
+    }
+    
+    // ICP
+    void loadObjectModels(string folder){
+        vector<string> filepaths;
+        for(auto color : colors) {
+            string fp = folder + "SmallerCylinder" + color + ".pcd";
+            filepaths.push_back(fp);
+        }
+        for(auto fp : filepaths) {
+            pcl::PointCloud<PointXYZ>::Ptr object(new pcl::PointCloud<PointXYZ>);
+            loadPCDFile(fp, *object);
+            objectModels.push_back(object);
+        }
+    }
+    void ICP(pcl::PointCloud<PointXYZ>::Ptr objectCloud, pcl::PointCloud<PointXYZ>::Ptr modelCloud, size_t iter = 50){
+        // From ex1 in lecture 6 regarding 3D -> 3D pose estimation
+        // Create a k-d tree for scene
+        search::KdTree<PointXYZ> tree;
+        tree.setInputCloud(objectCloud);
+        
+        // Set ICP parameters
+        const float thressq = 0.01 * 0.01;
+        
+        // Start ICP
+        Eigen::Matrix4f pose = Eigen::Matrix4f::Identity();
+        pcl::PointCloud<PointXYZ>::Ptr object_aligned(new pcl::PointCloud<PointXYZ>(*modelCloud));
+        {
+            ScopeTime t("ICP");
+            cout << "Starting ICP..." << endl;
+            for(size_t i = 0; i < iter; ++i) {
+                // 1) Find closest points
+                vector<vector<int> > idx;
+                vector<vector<float> > distsq;
+                tree.nearestKSearch(*object_aligned, std::vector<int>(), 1, idx, distsq);
+                
+                // Threshold and create indices for object/scene and compute RMSE
+                vector<int> idxobj;
+                vector<int> idxscn;
+                for(size_t j = 0; j < idx.size(); ++j) {
+                    if(distsq[j][0] <= thressq) {
+                        idxobj.push_back(j);
+                        idxscn.push_back(idx[j][0]);
+                    }
+                }
+                
+                // 2) Estimate transformation
+                Eigen::Matrix4f T;
+                pcl::registration::TransformationEstimationSVD<PointXYZ,PointXYZ> est;
+                est.estimateRigidTransformation(*object_aligned, idxobj, *objectCloud, idxscn, T);
+                
+                // 3) Apply pose
+                transformPointCloud(*object_aligned, *object_aligned, T);
+                
+                // 4) Update result
+                pose = T * pose;
+            }
+            
+            // Compute inliers and RMSE
+            vector<vector<int> > idx;
+            vector<vector<float> > distsq;
+            tree.nearestKSearch(*object_aligned, std::vector<int>(), 1, idx, distsq);
+            size_t inliers = 0;
+            float rmse = 0;
+            for(size_t i = 0; i < distsq.size(); ++i)
+                if(distsq[i][0] <= thressq)
+                    ++inliers, rmse += distsq[i][0];
+            rmse = sqrtf(rmse / inliers);
+            
+            // Print pose
+            cout << "Got the following pose:" << endl << pose << endl;
+            cout << "Inliers: " << inliers << "/" << objectCloud->size() << endl;
+            cout << "RMSE: " << rmse << endl;
+        } // End timing
+        
+
+        
+        *modelCloud = *object_aligned;
+    }
+    void moveObjectModels(){
+        vector<PointXYZ> objectCentroids = getCentroidsOfClouds(objectClouds);
+        vector<PointXYZ> modelCentroids = getCentroidsOfClouds(objectModels);
+        
+        for (unsigned int i = 0; i < objectModels.size(); i++) {
+            PointXYZ vectorObjectModel = sub(modelCentroids[i], objectCentroids[i]);
+            translatePointCloud(objectModels[i], vectorObjectModel);
+            
+            Eigen::Affine3f transform(Eigen::Affine3f::Identity());
+
+            if (i == 0){
+                transform.rotate(Eigen::AngleAxisf((60*M_PI) / 180, Eigen::Vector3f::UnitZ()));
+                transform.rotate(Eigen::AngleAxisf((60*M_PI) / 180, Eigen::Vector3f::UnitY()));
+                transform.rotate(Eigen::AngleAxisf((60*M_PI) / 180, Eigen::Vector3f::UnitX()));
+            } else {
+                transform.rotate(Eigen::AngleAxisf((120*M_PI) / 180, Eigen::Vector3f::UnitX()));
+            }
+
+            Eigen::Vector4f centroid(Eigen::Vector4f::Zero());
+            pcl::compute3DCentroid(*objectModels[i], centroid);
+            Eigen::Vector4f centroid_new(Eigen::Vector4f::Zero());
+            centroid_new.head<3>() = transform.rotation() * centroid.head<3>();
+            transform.translation() = centroid.head<3>() - centroid_new.head<3>();
+            
+            pcl::transformPointCloud(*objectModels[i], *objectModels[i], transform);
+            
+        }
+    }
+    void translatePointCloud(pcl::PointCloud<PointXYZ>::Ptr cloudToTranslate, PointXYZ translateVector){
+        pcl::PointCloud<PointXYZ>::Ptr translatedCloud(new pcl::PointCloud<PointXYZ>);
+        for(auto p : cloudToTranslate->points) {
+            PointXYZ translatedPoint = sub(p, translateVector);
+            translatedCloud->push_back(translatedPoint);
+        }
+        *cloudToTranslate = *translatedCloud;
     }
     
     // Mathematical Helpers
@@ -417,6 +539,7 @@ private:
     Frame* cameraFrame;
     string workcellFilePath;
     string camera25D = "Scanner25D";
+    vector<string> colors = {"Red","Green","Blue"};
     double fovy; int width, height;
 
     pcl::PointCloud<PointXYZ>::Ptr cloud;
@@ -425,6 +548,7 @@ private:
     pcl::PointCloud<PointNormal>::Ptr pclNormals;
     ModelCoefficients::Ptr coefficients;
     vector<pcl::PointCloud<PointXYZ>::Ptr> objectClouds;
+    vector<pcl::PointCloud<PointXYZ>::Ptr> objectModels;
 };
 
 /*
