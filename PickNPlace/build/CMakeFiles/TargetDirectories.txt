@@ -1,3 +1,0 @@
-/home/student/Desktop/Pick-and-place/PickNPlace/build/CMakeFiles/rebuild_cache.dir
-/home/student/Desktop/Pick-and-place/PickNPlace/build/CMakeFiles/PickNPlace.dir
-/home/student/Desktop/Pick-and-place/PickNPlace/build/CMakeFiles/edit_cache.dir
