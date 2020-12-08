@@ -79,15 +79,15 @@ include CMakeFiles/PickNPlace.dir/flags.make
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: CMakeFiles/PickNPlace.dir/flags.make
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o: ../pickAndPlace.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/PickNPlace/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o -c /Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/PickNPlace/pickAndPlace.cpp
+	/usr/local/Cellar/llvm/11.0.0/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.o -c /Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/PickNPlace/pickAndPlace.cpp
 
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.i"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/PickNPlace/pickAndPlace.cpp > CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.i
+	/usr/local/Cellar/llvm/11.0.0/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/PickNPlace/pickAndPlace.cpp > CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.i
 
 CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.s"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/PickNPlace/pickAndPlace.cpp -o CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.s
+	/usr/local/Cellar/llvm/11.0.0/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/PickNPlace/pickAndPlace.cpp -o CMakeFiles/PickNPlace.dir/pickAndPlace.cpp.s
 
 # Object files for target PickNPlace
 PickNPlace_OBJECTS = \

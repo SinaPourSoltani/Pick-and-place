@@ -99,10 +99,12 @@ int main(int argc, char** argv){
         // set pick points
     #endif
     #if D3D
-        DepthSensor ds(scene);
-        ds.findObjects();
         string folderToModels = "../../Vision/DepthSensor/";
-        ds.loadObjectModels(folderToModels);
+        DepthSensor ds(scene);
+        vector<Transform3D<> > objectTransforms = ds.findObjects(folderToModels);
+        for(auto t : objectTransforms){
+            cout << t << endl;
+        }
         ds.visualizePointClouds();
         // set pick points
     #endif

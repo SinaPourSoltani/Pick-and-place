@@ -138,7 +138,7 @@ CMAKE_LINKER:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/Xcod
 //Path to a program.
 CMAKE_MAKE_PROGRAM:FILEPATH=/usr/bin/make
 
-CMAKE_MODULE_LINKER_FLAGS:STRING='                                                                                                                                                                 '
+CMAKE_MODULE_LINKER_FLAGS:STRING='                                                                                                                                                   '
 
 //Flags used by the linker during the creation of modules during
 // DEBUG builds.
@@ -191,7 +191,7 @@ CMAKE_RANLIB:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/Xcod
 //Path to a program.
 CMAKE_READELF:FILEPATH=CMAKE_READELF-NOTFOUND
 
-CMAKE_SHARED_LINKER_FLAGS:STRING='                                                                                                                                                                 '
+CMAKE_SHARED_LINKER_FLAGS:STRING='                                                                                                                                                   '
 
 //Flags used by the linker during the creation of shared libraries
 // during DEBUG builds.
@@ -245,12 +245,6 @@ CMAKE_STRIP:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/Xcode
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
-//No help, variable specified on the command line.
-D2D:UNINITIALIZED=OFF
-
-//No help, variable specified on the command line.
-D3D:UNINITIALIZED=ON
-
 //Use Depth Sensor
 DS:BOOL=ON
 
@@ -284,8 +278,17 @@ OPENGL_gl_LIBRARY:FILEPATH=/Applications/Xcode.app/Contents/Developer/Platforms/
 //GLU library for OS X (usually same as OpenGL library)
 OPENGL_glu_LIBRARY:FILEPATH=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/OpenGL.framework
 
-//The directory containing a CMake configuration file for OpenCV.
-OpenCV_DIR:PATH=/usr/local/lib/cmake/opencv4
+//CXX compiler flags for OpenMP parallelization
+OpenMP_CXX_FLAGS:STRING=NOTFOUND
+
+//CXX compiler libraries for OpenMP parallelization
+OpenMP_CXX_LIB_NAMES:STRING=NOTFOUND
+
+//C compiler flags for OpenMP parallelization
+OpenMP_C_FLAGS:STRING=NOTFOUND
+
+//C compiler libraries for OpenMP parallelization
+OpenMP_C_LIB_NAMES:STRING=NOTFOUND
 
 //path to 2d headers
 PCL_2D_INCLUDE_DIR:PATH=/usr/local/include/pcl-1.11
@@ -540,6 +543,9 @@ RW_LINKER_FLAGS:STRING=
 //Use Sparse Stereo
 SS:BOOL=OFF
 
+//Use OpenMP to enamble <omp.h>
+USE_OpenMP:BOOL=ON
+
 //The directory containing VTKConfig.cmake
 VTK_DIR:PATH=/usr/local/opt/vtk@8.2/lib/cmake/vtk-8.2
 
@@ -729,10 +735,14 @@ FIND_PACKAGE_MESSAGE_DETAILS_Boost:INTERNAL=[/usr/local/include][cfound componen
 FIND_PACKAGE_MESSAGE_DETAILS_Eigen:INTERNAL=[/usr/local/include/eigen3][v(3.1)]
 //Details about finding FLANN
 FIND_PACKAGE_MESSAGE_DETAILS_FLANN:INTERNAL=[/usr/local/lib/libflann_cpp.dylib][/usr/local/include][v()]
-//Details about finding OpenCV
-FIND_PACKAGE_MESSAGE_DETAILS_OpenCV:INTERNAL=[/usr/local/Cellar/opencv/4.5.0_5][v4.5.0()]
 //Details about finding OpenGL
 FIND_PACKAGE_MESSAGE_DETAILS_OpenGL:INTERNAL=[/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/OpenGL.framework][/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/OpenGL.framework][c ][v()]
+//Details about finding OpenMP
+FIND_PACKAGE_MESSAGE_DETAILS_OpenMP:INTERNAL=[TRUE][TRUE][c ][v()]
+//Details about finding OpenMP_C
+FIND_PACKAGE_MESSAGE_DETAILS_OpenMP_C:INTERNAL=[-fopenmp=libomp -Wno-unused-command-line-argument][libomp;libgomp;libiomp5][libomp;libgomp;libiomp5][libomp;libgomp;libiomp5][v()]
+//Details about finding OpenMP_CXX
+FIND_PACKAGE_MESSAGE_DETAILS_OpenMP_CXX:INTERNAL=[-fopenmp=libomp -Wno-unused-command-line-argument][libomp;libgomp;libiomp5][libomp;libgomp;libiomp5][libomp;libgomp;libiomp5][v()]
 //Details about finding PCL
 FIND_PACKAGE_MESSAGE_DETAILS_PCL:INTERNAL=[pcl_common;pcl_kdtree;pcl_octree;pcl_search;pcl_sample_consensus;pcl_filters;pcl_io;pcl_features;pcl_ml;pcl_segmentation;pcl_visualization;pcl_surface;pcl_registration;pcl_keypoints;pcl_tracking;pcl_recognition;pcl_stereo;pcl_apps;pcl_outofcore;pcl_people;/usr/local/lib/libboost_system-mt.dylib;/usr/local/lib/libboost_filesystem-mt.dylib;/usr/local/lib/libboost_date_time-mt.dylib;/usr/local/lib/libboost_iostreams-mt.dylib;/usr/local/lib/libboost_regex-mt.dylib;optimized;/usr/local/lib/libqhull_p.dylib;debug;/usr/local/lib/libqhull_p.dylib;vtkChartsCore;vtkCommonColor;vtkCommonCore;vtksys;vtkCommonDataModel;vtkCommonMath;vtkCommonMisc;vtkCommonSystem;vtkCommonTransforms;vtkCommonExecutionModel;vtkFiltersGeneral;vtkCommonComputationalGeometry;vtkFiltersCore;vtkInfovisCore;vtkFiltersExtraction;vtkFiltersStatistics;vtkImagingFourier;vtkImagingCore;vtkRenderingContext2D;vtkRenderingCore;vtkFiltersGeometry;vtkFiltersSources;vtkRenderingFreeType;vtkfreetype;/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib/libz.tbd;vtkFiltersModeling;vtkImagingSources;vtkInteractionStyle;vtkInteractionWidgets;vtkFiltersHybrid;vtkImagingColor;vtkImagingGeneral;vtkImagingHybrid;vtkIOImage;vtkDICOMParser;vtkmetaio;/usr/local/lib/libjpeg.dylib;/usr/local/lib/libpng.dylib;/usr/local/lib/libtiff.dylib;vtkRenderingAnnotation;vtkRenderingVolume;vtkIOXML;vtkIOCore;vtkdoubleconversion;vtklz4;vtklzma;vtkIOXMLParser;/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib/libexpat.tbd;vtkIOGeometry;vtkIOLegacy;vtkIOPLY;vtkRenderingLOD;vtkViewsContext2D;vtkViewsCore;vtkRenderingContextOpenGL2;vtkRenderingOpenGL2;vtkglew;FLANN::FLANN][/usr/local/include/pcl-1.11;/usr/local/include/eigen3;/usr/local/include;/usr/local/Cellar/vtk@8.2/8.2.0_1/include/vtk-8.2][v(1.7)]
 //Details about finding PCL_2D
@@ -797,6 +807,38 @@ OPENGL_INCLUDE_DIR-ADVANCED:INTERNAL=1
 OPENGL_gl_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: OPENGL_glu_LIBRARY
 OPENGL_glu_LIBRARY-ADVANCED:INTERNAL=1
+//Result of TRY_COMPILE
+OpenMP_COMPILE_RESULT_CXX_Xclang fopenmp:INTERNAL=FALSE
+//Result of TRY_COMPILE
+OpenMP_COMPILE_RESULT_CXX_fopenmp:INTERNAL=FALSE
+//Result of TRY_COMPILE
+OpenMP_COMPILE_RESULT_CXX_fopenmplibiomp5:INTERNAL=FALSE
+//Result of TRY_COMPILE
+OpenMP_COMPILE_RESULT_CXX_fopenmplibomp:INTERNAL=FALSE
+//Result of TRY_COMPILE
+OpenMP_COMPILE_RESULT_C_Xclang fopenmp:INTERNAL=FALSE
+//Result of TRY_COMPILE
+OpenMP_COMPILE_RESULT_C_fopenmp:INTERNAL=FALSE
+//Result of TRY_COMPILE
+OpenMP_COMPILE_RESULT_C_fopenmplibiomp5:INTERNAL=FALSE
+//Result of TRY_COMPILE
+OpenMP_COMPILE_RESULT_C_fopenmplibomp:INTERNAL=FALSE
+//ADVANCED property for variable: OpenMP_CXX_FLAGS
+OpenMP_CXX_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OpenMP_CXX_LIB_NAMES
+OpenMP_CXX_LIB_NAMES-ADVANCED:INTERNAL=1
+//CXX compiler's OpenMP specification date
+OpenMP_CXX_SPEC_DATE:INTERNAL=
+//ADVANCED property for variable: OpenMP_C_FLAGS
+OpenMP_C_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OpenMP_C_LIB_NAMES
+OpenMP_C_LIB_NAMES-ADVANCED:INTERNAL=1
+//C compiler's OpenMP specification date
+OpenMP_C_SPEC_DATE:INTERNAL=
+//Result of TRY_COMPILE
+OpenMP_SPECTEST_CXX_:INTERNAL=FALSE
+//Result of TRY_COMPILE
+OpenMP_SPECTEST_C_:INTERNAL=FALSE
 //ADVANCED property for variable: PCL_2D_INCLUDE_DIR
 PCL_2D_INCLUDE_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PCL_APPS_INCLUDE_DIR

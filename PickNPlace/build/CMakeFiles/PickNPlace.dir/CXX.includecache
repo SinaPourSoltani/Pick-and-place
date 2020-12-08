@@ -95,6 +95,8 @@ pcl/common/random.h
 -
 pcl/common/time.h
 -
+pcl/common/transforms.h
+-
 pcl/features/normal_3d.h
 -
 pcl/features/spin_image.h
