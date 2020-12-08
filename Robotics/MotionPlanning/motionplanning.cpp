@@ -76,23 +76,20 @@ public:
     MotionPlanner(WorkCell::Ptr wc, SerialDevice::Ptr robot, State state) :
         wc(wc),
         robot(robot),
-        state(state)
-        {
-            generatePoints();
-        };
+        state(state){};
 
     void setPickAndPlace(Transform3D<> newPick, string name, Transform3D<> newPlace){
         pick = newPick;
         place = newPlace;
         objectName = name;
         initialState = state;
+        generatePoints();
     }
-    
+
     // Linear interpolation
     InterpolatorTrajectory<Transform3D<> > linearlyInterpolate(vector<float> timeBetweenPoints, vector<float> blendFractions = {}){
         // Inspired from https://www.robwork.dk/apidoc/cpp/doxygen/classrw_1_1trajectory_1_1InterpolatorTrajectory.html
         vector<Transform3D<> > points = getPointTrajectorySequence();
-
         if(points.size() - 1 != timeBetweenPoints.size() || (!blendFractions.empty() && blendFractions.size() != timeBetweenPoints.size())){
           RW_THROW("linearlyInterpolate crash since input vectors doesn't match! <timeBetweenPoints> and <blendFractions> should have size one less than <points>.");
         }else if(!blendFractions.empty()){
@@ -126,9 +123,15 @@ public:
     }
     QPath trajectoryToQPath(InterpolatorTrajectory<Transform3D<> > trajectory){
         vector<Q> qvector;
+        int counter = 0;
         for (double t = 0; t <= trajectory.duration(); t += DT) {
             Transform3D<> x = trajectory.x(t);
             vector<Q> qs = getJointConfigurations(x);
+            if(qs.size() <= 0){
+              cout << "Counter: " << ++counter << " / " << trajectory.duration()/DT << endl;
+              continue;
+            }
+            //cout << "qs size: " << qs.size() << endl << "x: " << endl << x << endl << "Q: " << ((t==0) ? qs[0] : nearestJointConfiguration(qvector.back(),qs)) << endl << endl;
             qvector.push_back(((t==0) ? qs[0] : nearestJointConfiguration(qvector.back(),qs)));
 
         }
@@ -147,6 +150,11 @@ public:
         return RRTConnect(jointPoints, extend);
     }
 
+
+    void writeTimedStatePath(TimedStatePath path, string filePath){
+      rw::loaders::PathLoader::storeTimedStatePath(*wc, path, filePath);
+    }
+
     // Write to files
     void writeTrajectoryToFile(InterpolatorTrajectory<Transform3D<> > trajectory, string filePath){
         std::ofstream out(filePath);
@@ -156,7 +164,7 @@ public:
         }
         out.close();
     }
-    void writeQPathVectorToFile(vector<QPath> fullpath, string filePath){
+    TimedStatePath writeQPathVectorToFile(vector<QPath> fullpath){
         state = initialState;
         TimedStatePath tStatePath;
         double time = 0;
@@ -168,9 +176,10 @@ public:
                 time += DT_VISU;
             }
         }
-        rw::loaders::PathLoader::storeTimedStatePath(*wc, tStatePath, filePath);
+        return tStatePath;
+        //rw::loaders::PathLoader::storeTimedStatePath(*wc, tStatePath, filePath);
     }
-    void writeQPathToFile(QPath path, string filePath){
+    TimedStatePath writeQPathToFile(QPath path, string filePath){
         cout << endl << "------------------------------------" << "writeQPathToFile called!" << "------------------------------------" << endl << endl;
         state = initialState;
         TimedStatePath tStatePath;
@@ -181,7 +190,8 @@ public:
             tStatePath.push_back(TimedState(time, state));
             time += DT_VISU;
         }
-        rw::loaders::PathLoader::storeTimedStatePath(*wc, tStatePath, filePath);
+        return tStatePath;
+        //rw::loaders::PathLoader::storeTimedStatePath(*wc, tStatePath, filePath);
     }
 
     ~MotionPlanner(){};
@@ -189,7 +199,7 @@ protected:
     void generatePoints(){
         home = robot->frames().back()->wTf(state);
         pickApproach = Transform3D<>(Vector3D<>(pick.P()(0), pick.P()(1), home.P()(2)),
-                                     pick.R());
+                                     home.R());
 
         pickDepart = Transform3D<>(pickApproach.P() + Vector3D<>(0, 0, pick.P()(2)),
                                    pick.R());
@@ -206,14 +216,14 @@ protected:
         }
         return {home, pick, place, home};
     }
-    
+
     // collision free solution closes to current configuration
     // Joint configurations
     float distanceBetweenJoinsConfigurations(Q c1, Q c2){
       int num_joints = c1.size();
       float weight = 5;
       float distance = 0;
-      for(unsigned int joint = 0; joint < num_joints; joint++){
+      for(int joint = 0; joint < num_joints; joint++){
         distance += weight-- * (c1[joint] - c2[joint]) * (c1[joint] - c2[joint]);
       }
       return distance;
@@ -255,7 +265,7 @@ protected:
         isPickingOrPlacing(target);
         if (compareTransforms(target, home)) {
             cout << "True home" << endl;
-            Q home(6,-0.00403171, -0.991591, -1.99674, -1.72721, 1.5708, 0.00225147);
+            Q home(6,-0.00403171, -1.06205, -1.68285, -1.96749, 1.5708, -0.00403171);
             return {home};
         }
 
@@ -265,7 +275,6 @@ protected:
 
         // get grasp frame in robot tool frame
         Transform3D<> targetAt = frameBaseTGoal * Transform3D<>(Vector3D<>(0,0,-0.07191),RPY<>(0,0,0));//* frameTcpTRobotTcp;
-
 
         rw::invkin::ClosedFormIKSolverUR::Ptr closedFormSovler = rw::common::ownedPtr( new rw::invkin::ClosedFormIKSolverUR(robot, state) );
         vector<Q> solutions = closedFormSovler->solve(targetAt, state);
@@ -287,7 +296,7 @@ protected:
             return collisionFreeSolutions;
         }
     }
-    
+
     // RRT helper functions
     vector<QPath> RRTConnect(vector<Q> interpolationJointsPoints, double extend){
         // State tmpState = state;
@@ -333,7 +342,7 @@ protected:
 
         return result;
     }
-    
+
     bool compareTransforms(Transform3D<> t1, Transform3D<> t2){
         double threshold = 0.015 * 1000;
         for(int i = 0; i < 3; i++){
@@ -371,7 +380,7 @@ protected:
             Kinematics::gripFrame(objectFrame, wc->getWorldFrame(), state);
         }
     }
-    
+
     WorkCell::Ptr wc;
     SerialDevice::Ptr robot;
     State state, initialState;
