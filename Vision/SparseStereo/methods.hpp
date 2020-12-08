@@ -16,6 +16,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/calib3d.hpp>
+#include <rw/rw.hpp>
 
 #define NUM_OBJECTS 3
 
@@ -23,6 +24,20 @@ double tmp_x=-1;
 double tmp_y=-1;
 bool compareVec(std::pair<cv::Point,double> &a, std::pair<cv::Point,double> &b){
   return a.second < b.second;
+}
+
+std::vector<rw::math::Transform3D<> > convertMatToTransform(std::vector<cv::Mat> points){
+    std::vector<rw::math::Transform3D<> > transforms;
+    for(unsigned int i = 0; i < points.size(); i++){
+        rw::math::Transform3D<> point(rw::math::Vector3D<>(
+                                                                     points[i].at<double>(0,0),
+                                                                     points[i].at<double>(1,0),
+                                                                     points[i].at<double>(2,0)),
+                                            rw::math::RPY<>(0,rw::math::Deg2Rad * 180,0));
+        
+        transforms.push_back(point);
+    }
+    return transforms;
 }
 
 bool comparePoints(cv::Point &a, cv::Point &b){

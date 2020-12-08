@@ -384,7 +384,7 @@ private:
         vector<PointXYZ> centroids = getCentroidsOfClouds((objectModels.empty() ? objectClouds : objectModels));
         Transform3D<> cameraT = cameraFrame->wTf(wc->getDefaultState());
         for (auto c : centroids) {
-            Transform3D<> T(Vector3D<>(c.x, c.y, c.z), RPY<>(0, 0, 0));
+            Transform3D<> T(Vector3D<>(c.x, c.y, c.z), RPY<>(0, Deg2Rad*180, 0));
             transforms.push_back(cameraT * T);
         }
         return transforms;

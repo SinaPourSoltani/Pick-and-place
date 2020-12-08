@@ -4,6 +4,10 @@
 	<FramePair first="Table" second="CylinderGreen" />
 	<FramePair first="Table" second="CylinderBlue" />
 
+    <FramePair first="WSG50" second="CylinderRed" />
+    <FramePair first="WSG50" second="CylinderGreen" />
+    <FramePair first="WSG50" second="CylinderBlue" />
+    
     <FramePair first="CylinderRed" second="CylinderGreen" />
     <FramePair first="CylinderRed" second="CylinderBlue" />
     <FramePair first="CylinderGreen" second="CylinderBlue" />

@@ -91,11 +91,12 @@ int main(int argc, char** argv){
 
     #if D2D
         SparseStereo ss(scene);
-        ss.addNoiseToImages(0,0.1);
+        ss.addNoiseToImages(0,0.0);
         vector<Mat> objects = ss.stereopsis();
         for(unsigned int i = 0; i < objects.size(); i++){
             cout << objects[i] << endl;
         }
+        picks = convertMatToTransform(objects);
         // set pick points
     #endif
     #if D3D
@@ -105,6 +106,7 @@ int main(int argc, char** argv){
         for(auto t : objectTransforms){
             cout << t << endl;
         }
+        picks = objectTransforms;
         ds.visualizePointClouds();
         // set pick points
     #endif

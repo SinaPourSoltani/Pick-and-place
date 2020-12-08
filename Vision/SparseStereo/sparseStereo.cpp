@@ -141,7 +141,7 @@ private:
         Mat src = imread(imagePath, IMREAD_COLOR);
         Mat img = src.clone();
         cvtColor(src, img, COLOR_RGBA2GRAY, 0);
-        threshold(img, img, 177, 255, THRESH_BINARY_INV);
+        threshold(img, img, 160, 255, THRESH_BINARY_INV);
         vector<vector<Point>> contours;
         findContours(img, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 
@@ -149,7 +149,7 @@ private:
         for(unsigned int i = 0; i < contours.size(); i++){
             Moments m = moments(contours[i], false);
             double area = contourArea(contours[i]);
-            if(area <= 0){ //If area is zero we don't consider the contour.
+            if(area <= 100){ //If area is zero we don't consider the contour.
                 continue;
             }
             pair<Point,double> p;
