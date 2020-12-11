@@ -1,3 +1,0 @@
-/Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Robotics/Reachability/build/CMakeFiles/rebuild_cache.dir
-/Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Robotics/Reachability/build/CMakeFiles/edit_cache.dir
-/Users/sinapoursoltani/Documents/SyddanskUniversitet/Kandidat/01_Semester/RoVi/Project/Pick-and-place/Robotics/Reachability/build/CMakeFiles/graspAnalysis.dir
