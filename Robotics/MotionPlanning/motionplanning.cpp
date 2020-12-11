@@ -241,7 +241,7 @@ protected:
       return bestConfig;
     }
     vector<Q> getJointConfigurations(Transform3D<> target, bool onlyCollisionFree = true) {
-
+        // Inspiration from: lab 5 in robotics
         // Get, make and print name of frames
         const string robotName = robot->getName();
         const string nameRobotBase = robotName + "." + "Base";

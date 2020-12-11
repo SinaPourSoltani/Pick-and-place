@@ -360,6 +360,7 @@ public:
     }
 
     vector<Mat> stereopsis(){
+        // Inspiration from: exercise 2 in vision
         leftProjectionMatrix = calculateProjectionMatrix(leftCamera, leftFovy, leftWidth, leftHeight);
         rightProjectionMatrix = calculateProjectionMatrix(rightCamera, rightFovy, rightWidth, rightHeight);
 
@@ -399,22 +400,6 @@ public:
             //cout << "Intersection: " << endl << intersection << endl;
             points3D.push_back(intersection);
 
-            // Compare with OpenCV triangulation
-            //The below code has been inspired from exercise from lecture 2 in Computer Vision.
-            /*
-             cout << "The OpenCV implmentation: " << endl;
-             cv::Mat pnts3D(1, 1, CV_64FC4);
-             cv::Mat cam0pnts(1, 1, CV_64FC2);
-             cv::Mat cam1pnts(1, 1, CV_64FC2);
-             cam0pnts.at<cv::Vec2d>(0)[0] = points[0].at<double>(0, 0);
-             cam0pnts.at<cv::Vec2d>(0)[1] = points[0].at<double>(1, 0);
-             cam1pnts.at<cv::Vec2d>(0)[0] = points[1].at<double>(0, 0);
-             cam1pnts.at<cv::Vec2d>(0)[1] = points[1].at<double>(1, 0);
-             triangulatePoints(leftProjectionMat, rightProjectionMat, cam0pnts, cam1pnts, pnts3D);
-             std::cout << "OpenCV triangulation" << std::endl;
-             std::cout << "Image points: " << cam0pnts << "\t" << cam1pnts << std::endl << std::endl;
-             std::cout << "Triangulated point (normalized): " << std::endl << pnts3D / pnts3D.at<double>(3, 0) << std::endl << std::endl;
-             */
         }
         return points3D;
     }

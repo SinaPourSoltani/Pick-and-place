@@ -38,6 +38,7 @@ using namespace rw::common;
 
 vector<Q> getConfigurations(const string nameGoal, const string nameTcp, SerialDevice::Ptr robot, WorkCell::Ptr wc, State state)
 {
+    // Inspiration from: lab 5 in robotics
     // Get, make and print name of frames
     const string robotName = robot->getName();
     const string nameRobotBase = robotName + "." + "Base";
