@@ -8,7 +8,7 @@
 	</Frame>
 
 	<Frame name="URReference" refframe="Table" type="Movable">
-		<RPY>0 0 0</RPY> <Pos>0.1625 0.035 0.11</Pos>
+		<RPY>0 0 0</RPY> <Pos>0 0 0.11</Pos>
 	</Frame>
 	<Include file="UR5/UR-6-85-5-A/Device.wc.xml" />
 
@@ -68,7 +68,7 @@
 
     <!-- Our objects -->
     <Frame name="CylinderRed" refframe="Table" type="Movable" daf="true">
-        <RPY>0 0 0</RPY> <Pos>0.25 0.474 0.191</Pos>
+        <RPY>0 0 0</RPY> <Pos>0.3 -0.5 0.191</Pos>
         <Drawable name="CylinderRedGeo" refframe="CylinderRed" colmodel="Enabled">
             <Pos>0 0 0</Pos>
             <RPY>0 0 0</RPY>

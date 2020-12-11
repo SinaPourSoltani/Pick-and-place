@@ -3,7 +3,19 @@
 	<FramePair first="Table" second="CylinderRed" />
 	<FramePair first="Table" second="CylinderGreen" />
 	<FramePair first="Table" second="CylinderBlue" />
+
+    <FramePair first="WSG50" second="CylinderRed" />
+    <FramePair first="WSG50" second="CylinderGreen" />
+    <FramePair first="WSG50" second="CylinderBlue" />
+    
+    <FramePair first="CylinderRed" second="CylinderGreen" />
+    <FramePair first="CylinderRed" second="CylinderBlue" />
+    <FramePair first="CylinderGreen" second="CylinderBlue" />
+
     <FramePair first="Table" second="Obstacle" />
+    <FramePair first="Table" second="PlaceObstacle" />
+
+
 	<FramePair first="UR-6-85-5-A.Joint5" second="WSG50RefFrame" />
 	<FramePair first="UR-6-85-5-A.Base" second="Table" />
    </Exclude>
