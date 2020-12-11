@@ -6,6 +6,8 @@
     #include "../Vision/DepthSensor/depthSensor.cpp"
 #endif
 
+#include "fstream"
+
 using namespace std;
 
 using namespace rw::core;
@@ -28,6 +30,15 @@ using rw::sensor::Image;
 #define CYLG_HEIGHT 0.08
 #define CYLB_HEIGHT 0.12
 #define CYL_OFFSET 0.0001
+
+double euclideanDistance(Transform3D<> t1, Transform3D<> t2){
+    double xDist = (t1.P()(0) - t2.P()(0));
+    double yDist = (t1.P()(1) - t2.P()(1));
+    double zDist = (t1.P()(2) - t2.P()(2));
+    
+    double dist = sqrt( xDist * xDist + yDist * yDist + zDist * zDist );
+    return dist;
+}
 
 int main(int argc, char** argv){
     if(argc < 2) {
@@ -88,6 +99,10 @@ int main(int argc, char** argv){
         Transform3D<>(Vector3D<>(0, 0.474, 0.150), RPY<>(0,Deg2Rad * 180,0)),
         Transform3D<>(Vector3D<>(-0.25, 0.474, 0.170), RPY<>(0,Deg2Rad * 180,0)),
     };
+    
+    ofstream file;
+    file.open("DepthSensorTestBIG1.txt");
+    file << "noise, trial, errorR, errorG, errorB" << endl;
 
     #if D2D
         SparseStereo ss(scene);
@@ -102,14 +117,33 @@ int main(int argc, char** argv){
     #if D3D
         string folderToModels = "../../Vision/DepthSensor/";
         DepthSensor ds(scene);
-        vector<Transform3D<> > objectTransforms = ds.findObjects(folderToModels);
-        for(auto t : objectTransforms){
-            cout << t << endl;
+        bool once = true;
+        for (float noise = 0.007; noise <= 0.02; noise += 0.001) {
+            for (unsigned int trial = 0; trial < 20; trial++) {
+                if (noise == 0.002 && once){
+                    trial = 17; // husk at ændre filnavn!!!!
+                    once = false;
+                }
+                file << noise << "\t" << trial << "\t";
+                vector<Transform3D<> > objectTransforms = {};
+                objectTransforms = ds.findObjects(noise, folderToModels);
+                //picks = objectTransforms;
+                for (unsigned int i = 0; i < objectTransforms.size(); i++ ) { // not necessary if relative to Table
+                    Transform3D<> zCorrected(Vector3D<>(objectTransforms[i].P()(0),objectTransforms[i].P()(1),objectTransforms[i].P()(2) + 0.1), objectTransforms[i].R());
+                    objectTransforms[i] = zCorrected;
+                }
+                for (unsigned int i = 0; i < objectTransforms.size(); i++ ){
+                    double error = euclideanDistance(objectTransforms[i], picks[i]);
+                    cout << i << ": " << error << endl;
+                    file << error << "\t";
+                }
+                file << endl;
+            }
         }
-        picks = objectTransforms;
-        ds.visualizePointClouds();
         // set pick points
     #endif
+    
+    file.close();
 
     State state = wc->getDefaultState();
     MotionPlanner mp(wc, robot, state);

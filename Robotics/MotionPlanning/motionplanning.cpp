@@ -31,7 +31,7 @@
 #include <string>
 
 #define DT 0.1
-#define DT_VISU DT * 0.1
+#define DT_VISU DT
 #define PLACE_CENTER_X 0.30
 #define PLACE_CENTER_Y -0.50
 

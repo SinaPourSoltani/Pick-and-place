@@ -1,0 +1,4 @@
+../../../Project_WorkCell/Scene.wc.xml
+CylinderRed
+x y #collisionFreeSolutions
+0.1625 0.035 2351

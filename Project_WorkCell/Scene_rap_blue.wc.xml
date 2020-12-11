@@ -68,7 +68,7 @@
 
     <!-- Our objects -->
     <Frame name="CylinderRed" refframe="Table" type="Movable" daf="true">
-        <RPY>0 0 0</RPY> <Pos>0.25 0.474 0.191</Pos>
+        <RPY>0 0 0</RPY> <Pos>0.3 -0.5 0.191</Pos>
         <Drawable name="CylinderRedGeo" refframe="CylinderRed" colmodel="Enabled">
             <Pos>0 0 0</Pos>
             <RPY>0 0 0</RPY>
@@ -82,7 +82,7 @@
 
 
     <Frame name="CylinderGreen" refframe="Table" type="Movable" daf="true">
-        <RPY>0 0 0</RPY> <Pos>0.00 0.474 0.150</Pos>
+        <RPY>0 0 0</RPY> <Pos>0.3 -0.5 0.3111</Pos>
         <Drawable name="CylinderGreenGeo" refframe="CylinderGreen" colmodel="Enabled">
             <Pos>0 0 0</Pos>
             <RPY>0 0 0</RPY>
@@ -96,7 +96,7 @@
 
 
     <Frame name="CylinderBlue" refframe="Table" type="Movable" daf="true">
-        <RPY>0 0 0</RPY> <Pos>-0.25 0.474 0.170</Pos>
+        <RPY>0 0 0</RPY> <Pos>0.3 -0.5 0.4112</Pos>
         <Drawable name="CylinderBlueGeo" refframe="CylinderBlue" colmodel="Enabled">
             <Pos>0 0 0</Pos>
             <RPY>0 0 0</RPY>

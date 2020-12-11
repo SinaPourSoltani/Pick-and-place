@@ -1,0 +1,4 @@
+../../../Project_WorkCell/Scene_rap_blue.wc.xml
+CylinderBlue
+x y #collisionFreeSolutions
+0.1625 0.035 3043
