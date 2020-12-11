@@ -87,22 +87,27 @@ public:
     
     vector<Transform3D<> > findObjects(float noise, string pathToModelsFolder = ""){
         *cloud = *initCloud;
+        //visualizePointClouds();
         addNoise(noise); // 0.001 -> 0.02 | 0.1 mm to 2 cm
-        //voxelGrid();
+        voxelGrid();
         //calculateSurfaceNormals();
-        
+        visualizePointClouds();
         // Find biggest planar surface (Tabletop)
         // And remove points beneath
         planeModelSegmentation();
         removePoints(true);
+        //visualizePointClouds();
         
         // Find biggest remaining planar surface (Obstacle)
         // And remove points behind
         planeModelSegmentation();
         removePoints(false);
+        //visualizePointClouds();
         
         cluster();
+        visualizePointClouds();
         sortClusters(0, false);
+        visualizePointClouds();
         
         if(pathToModelsFolder != ""){
             objectModels = {};
@@ -128,7 +133,7 @@ public:
         //v.addPointCloud<PointXYZ>(plane, PointCloudColorHandlerCustom<PointXYZ>(plane, 0,255, 0),"plane");
         //v.addPlane(*coefficients, "detectedPlane");
         //v.addPointCloud<PointXYZ>(randomPoints, PointCloudColorHandlerCustom<PointXYZ>(randomPoints, 255,255, 255),"randompoints");
-        v.addPointCloudNormals<PointNormal>(pclNormals,1,0.6,"normals");
+        //v.addPointCloudNormals<PointNormal>(pclNormals,10,0.06,"normals");
         for(int i = 0; i < objectModels.size(); i++){
             v.addPointCloud<PointXYZ>(objectModels[i], PointCloudColorHandlerCustom<PointXYZ>(objectModels[i], 255, 255, 255), "objectModel_" + colors[i]);
         }
