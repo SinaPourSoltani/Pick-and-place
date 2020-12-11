@@ -84,7 +84,7 @@ private:
 
 
     //This funciton is inspired from Sina's work
-    void addNoiseToImage(string image_, string output, int mean = 0, double variance = 0.1){
+    void addGaussianNoiseToImage(string image_, string output, int mean = 0, double variance = 0.1){
         cout << "\nAdding noise to " << image_ << endl;
         Mat img = imread(image_, 1);
         Scalar a = cv::mean(img); //Must have cv:: before or it wont compile. I think i takes another mean function from RobWorkStudio or something.
@@ -93,6 +93,41 @@ private:
         randn(noise, mean, power * variance);
         addWeighted(img, 1.0, noise, 1.0, 0.0, img);
         imwrite(output, img);
+    }
+
+    void addSaltAndPepperNoiseToImage(string image_, string output, float amount){
+      if(amount < 0.0 || amount > 1.0){
+        throw("The % of salt and pepper noise has to be a float between 0.0 and 1.0");
+      }
+      Mat img = imread(image_, 1);
+      float randomNumber = 0.0;
+      int rgbPicker = 0;
+      for(int row = 0; row < img.rows; row++){
+        for(int col = 0; col < img.cols; col++){
+          randomNumber = ((float)rand() / (RAND_MAX));
+          if(randomNumber <= amount){
+            rgbPicker = rand() % 3;
+            switch (rgbPicker) {
+              case 0:
+                img.at<Vec3b>(row,col)[0] = 255;
+                img.at<Vec3b>(row,col)[1] = 0;
+                img.at<Vec3b>(row,col)[2] = 0;
+                break;
+              case 1:
+                img.at<Vec3b>(row,col)[0] = 0;
+                img.at<Vec3b>(row,col)[1] = 255;
+                img.at<Vec3b>(row,col)[2] = 0;
+                break;
+              default:
+                img.at<Vec3b>(row,col)[0] = 0;
+                img.at<Vec3b>(row,col)[1] = 0;
+                img.at<Vec3b>(row,col)[2] = 255;
+                break;
+            }
+          }
+        }
+      }
+      imwrite(output, img);
     }
 
     //This function is inspired from the SamplePlugin given for the project
@@ -142,6 +177,7 @@ private:
         Mat img = src.clone();
         cvtColor(src, img, COLOR_RGBA2GRAY, 0);
         threshold(img, img, 160, 255, THRESH_BINARY_INV);
+        imwrite("Threshold.png", img);
         vector<vector<Point>> contours;
         findContours(img, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 
@@ -153,6 +189,7 @@ private:
                 continue;
             }
             pair<Point,double> p;
+            //The equation under is found here: https://www.learnopencv.com/find-center-of-blob-centroid-using-opencv-cpp-python/
             p.first = Point(m.m10 / m.m00, m.m01 / m.m00);
             p.second = area;
             coordsArea.push_back(p);
@@ -178,6 +215,7 @@ private:
             circle(src, pointsVec[2], 2, Scalar(0, 255, 255), -1);
             imshow(imagePath, src);
             waitKey(0);
+            //destroyAllWindows();
         }
         return points;
     }
@@ -298,9 +336,13 @@ public:
         rightSimcam->stop();
     }
 
-    void addNoiseToImages(int mean = 0, double variance = 0.1){
-        addNoiseToImage(pathLeftImage, pathLeftImageNoise, mean, variance);
-        addNoiseToImage(pathRightImage, pathRightImageNoise, mean, variance);
+    void addGaussianNoiseToImages(int mean = 0, double variance = 0.1){
+        addGaussianNoiseToImage(pathLeftImage, pathLeftImageNoise, mean, variance);
+        addGaussianNoiseToImage(pathRightImage, pathRightImageNoise, mean, variance);
+    }
+    void addSaltAndPepperNoiseToImages(float amount = 0.10){
+      addSaltAndPepperNoiseToImage(pathLeftImage, pathLeftImageNoise, amount);
+      addSaltAndPepperNoiseToImage(pathRightImage, pathRightImageNoise, amount);
     }
 
     //This function is temp until feature detection is applied.

@@ -100,7 +100,7 @@ int main(int argc, char** argv){
 
     #if D2D
         SparseStereo ss(scene);
-        ss.addNoiseToImages(0,0.0);
+        ss.addSaltAndPepperNoiseToImages();
         vector<Mat> objects = ss.stereopsis();
         for(unsigned int i = 0; i < objects.size(); i++){
             cout << objects[i] << endl;

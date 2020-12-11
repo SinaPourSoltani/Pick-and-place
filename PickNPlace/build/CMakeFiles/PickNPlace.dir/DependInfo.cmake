@@ -10,7 +10,7 @@ set(CMAKE_CXX_COMPILER_ID "Clang")
 
 # Preprocessor definitions for this target.
 set(CMAKE_TARGET_DEFINITIONS_CXX
-  "D2D=false"
+  "D2D=true"
   "D3D=false"
   "QT_CORE_LIB"
   "QT_GUI_LIB"
@@ -36,6 +36,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/usr/local/Frameworks/Python.framework/Versions/3.9/include/python3.9"
   "/Users/sinapoursoltani/RobWork/RobWorkStudio/cmake/../src"
   "/Users/sinapoursoltani/RobWork/RobWorkStudio/cmake/../ext/qtpropertybrowser/src"
+  "/usr/local/Cellar/opencv/4.5.0_5/include/opencv4"
   "/usr/local/opt/qt5/lib/QtCore.framework"
   "/usr/local/opt/qt5/lib/QtCore.framework/Headers"
   "/usr/local/opt/qt5/./mkspecs/macx-clang"
